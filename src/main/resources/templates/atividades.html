@@ -142,7 +142,7 @@
     <!-- PROGRESS -->
     <div class="card" style="margin-bottom:20px;">
       <div class="muted">
-          {horasHomologadas + horasPendentes} / {horasTotais}h ({progresso}%)
+          {horasEnviadas} / {horasTotais}h ({progresso}%)
       </div>
 
       <div class="progress">
@@ -171,15 +171,15 @@
             <div>
               <strong>{a.tipo.nome}</strong>
 
-              {#if a.status == 'homologada'}
+              {#if a.estado == 'homologada'}
                 <span class="badge ok">Homologada</span>
               {/if}
 
-              {#if a.status == 'pendente'}
+              {#if a.estado == 'pendente'}
                 <span class="badge pendente">Pendente</span>
               {/if}
 
-              {#if a.status == 'rejeitada'}
+              {#if a.estado == 'rejeitada'}
                 <span class="badge erro">Rejeitada</span>
               {/if}
             </div>

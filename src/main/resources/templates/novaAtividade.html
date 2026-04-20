@@ -100,12 +100,8 @@
         <div class="error">{form.erro}</div>
       {/if}
 
-      {#if form.sucesso}
-        <div class="success">{form.sucesso}</div>
-      {/if}
-
       <form method="POST" action="/atividades" enctype="multipart/form-data">
-
+        <input type="hidden" name="uid" value="{form.uid}">
         <div class="form-group">
           <label>Tipo *</label>
           <select name="tipo" class="input" required>
