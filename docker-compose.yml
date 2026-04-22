@@ -1,0 +1,22 @@
+networks:
+  my-network:
+    driver: bridge
+
+volumes:
+  openldap_data:
+    driver: local
+
+services:
+  openldap:
+    image: lldap/lldap
+    ports:
+      - 3890:3890
+      - 17170:17170
+    environment:
+      - LLDAP_JWT_SECRET=MhnXYBtz0}d!b{dzopyc<#-}7x+jCMR/
+      - LLDAP_LDAP_USER_PASS=senha123
+      - LLDAP_VERBOSE=true
+    networks:
+      - my-network
+    volumes:
+      - openldap_data:/bitnami/openldap

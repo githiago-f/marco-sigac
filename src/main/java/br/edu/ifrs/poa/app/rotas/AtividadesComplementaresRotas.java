@@ -2,16 +2,15 @@ package br.edu.ifrs.poa.app.rotas;
 
 import java.io.IOException;
 import java.net.URI;
-import java.nio.file.Files;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import br.edu.ifrs.poa.app.dtos.NovaAtividadeRequest;
 import br.edu.ifrs.poa.infra.CarregadorDeArquivos;
-import br.edu.ifrs.poa.model.atividades.Atividade;
 import br.edu.ifrs.poa.model.atividades.AtividadesRepository;
 import br.edu.ifrs.poa.model.atividades.EstadoAtividade;
 import io.quarkus.qute.Template;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.*;
@@ -36,8 +35,9 @@ public class AtividadesComplementaresRotas {
   }
 
   @POST
-  @Consumes(MediaType.MULTIPART_FORM_DATA)
   @Transactional
+  @RolesAllowed("aluno")
+  @Consumes(MediaType.MULTIPART_FORM_DATA)
   public Response novaAtividade(NovaAtividadeRequest novaAtividadeRequest) {
     String certificado;
     try {
@@ -60,6 +60,7 @@ public class AtividadesComplementaresRotas {
 
   @GET
   @Path("/registrar")
+  @RolesAllowed("aluno")
   @Produces(MediaType.TEXT_HTML)
   public String novaAtividade(@QueryParam("erro") String erro) {
     var tipos = atividadesRepository.buscarTodosOsTipos();
@@ -70,6 +71,7 @@ public class AtividadesComplementaresRotas {
   }
 
   @GET
+  // @RolesAllowed("aluno")
   @Produces(MediaType.TEXT_HTML)
   public String verAtividades() {
     var minhasAtividades = atividadesRepository.buscarMinhasAtividades("1");
