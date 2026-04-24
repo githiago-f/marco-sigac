@@ -9,14 +9,17 @@ import jakarta.enterprise.context.ApplicationScoped;
 @ApplicationScoped
 public class AtividadesRepository {
   public List<Atividade> buscarMinhasAtividades(String uid) {
-    return Atividade.where((Atividade a) -> a.uid.equals(uid)).toList();
+    return Atividade.where((Atividade a) -> a.aluno.uid.equals(uid)).toList();
   }
 
-  public Atividade novaAtividade(NovaAtividadeRequest novaAtividadeRequest, String caminhoDoCertificado, String uid) {
+  public Atividade novaAtividade(
+      NovaAtividadeRequest novaAtividadeRequest,
+      String caminhoDoCertificado,
+      Aluno aluno) {
     var atividade = new Atividade();
     atividade.estado = EstadoAtividade.PENDENTE;
     atividade.horas = novaAtividadeRequest.horas;
-    atividade.uid = uid;
+    atividade.aluno = aluno;
     atividade.tipo = buscaTipoPorNome(novaAtividadeRequest.tipo)
         .orElseThrow(() -> new RuntimeException("Tipo de atividade inválido"));
     atividade.certificado = caminhoDoCertificado;

@@ -15,7 +15,7 @@ public class Atividade extends QubitEntity {
         public EstadoAtividade estado;
 
         Double horas;
-        public String uid;
+        public Aluno aluno;
         public String certificado;
         @CreationTimestamp
         public Date dataEnvio;

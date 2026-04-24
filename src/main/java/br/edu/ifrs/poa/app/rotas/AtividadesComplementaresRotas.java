@@ -3,11 +3,11 @@ package br.edu.ifrs.poa.app.rotas;
 import java.io.IOException;
 import java.net.URI;
 
-import org.wildfly.security.authz.SimpleAttributesEntry;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import br.edu.ifrs.poa.app.dtos.NovaAtividadeRequest;
 import br.edu.ifrs.poa.infra.ProvedorDeArmazenamento;
+import br.edu.ifrs.poa.model.atividades.Aluno;
 import br.edu.ifrs.poa.model.atividades.AtividadesRepository;
 import br.edu.ifrs.poa.model.atividades.EstadoAtividade;
 import io.quarkus.qute.Template;
@@ -34,17 +34,26 @@ public class AtividadesComplementaresRotas {
   @ConfigProperty(name = "br.edu.ifrs.poa.atividades-complementares.total-horas", defaultValue = "70")
   private Integer totalHoras;
 
+  @GET
+  @Path("/certificados/{arquivo}")
+  @RolesAllowed("professores")
+  @Produces(MediaType.APPLICATION_OCTET_STREAM)
+  public Response verArquivo(@PathParam("arquivo") String arquivo) {
+    var stream = provedorDeArmazenamento.lerArquivo(arquivo);
+    return Response.ok(stream).build();
+  }
+
   @POST
   @Transactional
   @RolesAllowed("alunos")
   @Consumes(MediaType.MULTIPART_FORM_DATA)
   public Response novaAtividade(NovaAtividadeRequest novaAtividadeRequest, @Context SecurityIdentity securityIdentity) {
-    var uid = securityIdentity.getPrincipal().getName();
+    var aluno = new Aluno(securityIdentity);
 
     try {
       var certificado = provedorDeArmazenamento.persistir(novaAtividadeRequest.arquivo);
 
-      atividadesRepository.novaAtividade(novaAtividadeRequest, certificado, uid);
+      atividadesRepository.novaAtividade(novaAtividadeRequest, certificado, aluno);
 
       return Response.seeOther(URI.create("/atividades")).build();
     } catch (IOException e) {
@@ -72,13 +81,12 @@ public class AtividadesComplementaresRotas {
   }
 
   @GET
-  @RolesAllowed("alunos")
+  @RolesAllowed({ "alunos", "professores" })
   @Produces(MediaType.TEXT_HTML)
   public String verAtividades(@Context SecurityIdentity securityIdentity) {
-    var uid = securityIdentity.getPrincipal().getName();
-    var name = ((SimpleAttributesEntry) securityIdentity.getAttribute("displayName")).getFirst();
+    var aluno = new Aluno(securityIdentity);
 
-    var minhasAtividades = atividadesRepository.buscarMinhasAtividades(uid);
+    var minhasAtividades = atividadesRepository.buscarMinhasAtividades(aluno.uid);
     double horasHomologadas = minhasAtividades.stream()
         .filter(a -> a.estado.equals(EstadoAtividade.HOMOLOGADO))
         .mapToDouble(a -> a.getHoras())
@@ -90,7 +98,7 @@ public class AtividadesComplementaresRotas {
         .sum();
 
     return atividades
-        .data("usuario", name)
+        .data("usuario", aluno)
         .data("horasHomologadas", horasHomologadas)
         .data("horasPendentes", horasPendentes)
         .data("horasFaltantes", totalHoras - horasHomologadas)
