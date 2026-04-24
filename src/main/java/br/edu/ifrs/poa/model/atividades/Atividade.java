@@ -14,9 +14,19 @@ public class Atividade extends QubitEntity {
         public TipoAtividade tipo;
         public EstadoAtividade estado;
 
-        public Double horas;
+        Double horas;
         public String uid;
         public String certificado;
         @CreationTimestamp
         public Date dataEnvio;
+
+        /**
+         * Respeitando o limite de horas
+         */
+        public Double getHoras() {
+                if (tipo.limite.compareTo(horas) < 0) {
+                        return tipo.limite;
+                }
+                return horas;
+        }
 }

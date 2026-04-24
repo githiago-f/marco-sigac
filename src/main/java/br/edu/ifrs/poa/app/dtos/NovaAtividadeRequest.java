@@ -12,9 +12,6 @@ public class NovaAtividadeRequest {
   @RestForm
   public Double horas;
 
-  @RestForm
-  public String uid;
-
   @RestForm("arquivo")
   @PartType(MediaType.APPLICATION_OCTET_STREAM)
   public FileUpload arquivo;

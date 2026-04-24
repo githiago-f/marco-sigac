@@ -96,18 +96,17 @@
       <h1>Nova Atividade</h1>
       <p class="muted">Envie seu certificado em PDF</p>
 
-      {#if form.erro}
+      {#if erro}
         <div class="error">{form.erro}</div>
       {/if}
 
       <form method="POST" action="/atividades" enctype="multipart/form-data">
-        <input type="hidden" name="uid" value="{form.uid}">
         <div class="form-group">
           <label>Tipo *</label>
           <select name="tipo" class="input" required>
 
             {#for t in tipos}
-              <option value="{t}" {#if form.tipo == t}selected{/if}>
+              <option value="{t}">
                 {t}
               </option>
             {/for}
