@@ -2,14 +2,16 @@ package br.edu.ifrs.poa.app.rotas;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.List;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import br.edu.ifrs.poa.app.dtos.NovaAtividadeRequest;
 import br.edu.ifrs.poa.infra.ProvedorDeArmazenamento;
-import br.edu.ifrs.poa.model.atividades.Aluno;
+import br.edu.ifrs.poa.model.atividades.Usuario;
 import br.edu.ifrs.poa.model.atividades.AtividadesRepository;
 import br.edu.ifrs.poa.model.atividades.EstadoAtividade;
+import io.quarkus.panache.common.Page;
 import io.quarkus.qute.Template;
 import io.quarkus.security.identity.SecurityIdentity;
 import jakarta.annotation.security.RolesAllowed;
@@ -26,7 +28,7 @@ public class AtividadesComplementaresRotas {
   AtividadesRepository atividadesRepository;
 
   @Inject
-  Template novaAtividade, atividades;
+  Template novaAtividade, atividades, aprovacao;
 
   @Inject
   ProvedorDeArmazenamento provedorDeArmazenamento;
@@ -48,7 +50,7 @@ public class AtividadesComplementaresRotas {
   @RolesAllowed("alunos")
   @Consumes(MediaType.MULTIPART_FORM_DATA)
   public Response novaAtividade(NovaAtividadeRequest novaAtividadeRequest, @Context SecurityIdentity securityIdentity) {
-    var aluno = new Aluno(securityIdentity);
+    var aluno = new Usuario(securityIdentity);
 
     try {
       var certificado = provedorDeArmazenamento.persistir(novaAtividadeRequest.arquivo);
@@ -80,19 +82,14 @@ public class AtividadesComplementaresRotas {
         .render();
   }
 
-  @GET
-  @RolesAllowed({ "alunos", "professores" })
-  @Produces(MediaType.TEXT_HTML)
-  public String verAtividades(@Context SecurityIdentity securityIdentity) {
-    var aluno = new Aluno(securityIdentity);
-
+  public String verAtividadesAluno(Usuario aluno) {
     var minhasAtividades = atividadesRepository.buscarMinhasAtividades(aluno.uid);
-    double horasHomologadas = minhasAtividades.stream()
+    var horasHomologadas = minhasAtividades.stream()
         .filter(a -> a.estado.equals(EstadoAtividade.HOMOLOGADO))
         .mapToDouble(a -> a.getHoras())
         .sum();
 
-    double horasPendentes = minhasAtividades.stream()
+    var horasPendentes = minhasAtividades.stream()
         .filter(a -> a.estado.equals(EstadoAtividade.PENDENTE))
         .mapToDouble(a -> a.getHoras())
         .sum();
@@ -107,5 +104,33 @@ public class AtividadesComplementaresRotas {
         .data("atividades", minhasAtividades)
         .data("horasTotais", totalHoras)
         .render();
+
+  }
+
+  public String verAtividadesProfessor(Usuario usuario, Page page) {
+    var totais = atividadesRepository.contaAtividadesPorTipo();
+    var atividades = atividadesRepository.listarAtividades(null, null, page);
+
+    return aprovacao
+        .data("usuario", usuario)
+        .data("totalPendentes", totais.get(EstadoAtividade.PENDENTE))
+        .data("totalHomologadas", totais.get(EstadoAtividade.HOMOLOGADO))
+        .data("totalRejeitadas", totais.get(EstadoAtividade.REJEITADO))
+        .data("atividades", atividades)
+        .render();
+  }
+
+  @GET
+  @RolesAllowed({ "alunos", "professores" })
+  @Produces(MediaType.TEXT_HTML)
+  public String verAtividades(@QueryParam("page") int page, @QueryParam("size") int size,
+      @Context SecurityIdentity securityIdentity) {
+    var usuario = new Usuario(securityIdentity);
+
+    if (securityIdentity.hasRole("professores")) {
+      return verAtividadesProfessor(usuario, Page.of(page, size == 0 ? 10 : size));
+    }
+
+    return verAtividadesAluno(usuario);
   }
 }

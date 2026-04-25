@@ -6,18 +6,18 @@ import io.quarkus.security.identity.SecurityIdentity;
 import jakarta.persistence.Embeddable;
 
 @Embeddable
-public class Aluno {
+public class Usuario {
   public String uid, nome;
 
-  public Aluno() {
+  public Usuario() {
   }
 
-  public Aluno(String uid, String nome) {
+  public Usuario(String uid, String nome) {
     this.uid = uid;
     this.nome = nome;
   }
 
-  public Aluno(SecurityIdentity identity) {
+  public Usuario(SecurityIdentity identity) {
     var uid = identity.getPrincipal().getName();
     var name = ((SimpleAttributesEntry) identity.getAttribute("displayName")).getFirst();
     this(uid, name);

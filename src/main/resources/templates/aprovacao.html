@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Aprovação de Atividades</title>
+  <link rel="stylesheet" href="/css/theme.css"/>
+  <style>
+  .container {
+    max-width: 1200px;
+    margin: auto;
+    padding: 24px;
+  }
+
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 32px;
+  }
+
+  .grid-3 {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+
+  @media (min-width: 768px) {
+    .grid-3 {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  .flex-between {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .atividade {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    margin-bottom: 12px;
+  }
+
+  @media (min-width: 768px) {
+    .atividade {
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
+    }
+  }
+
+  .atividade-header {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+
+  .atividade-meta {
+    font-size: 14px;
+    color: #666;
+  }
+
+  .atividade-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .btn-outline {
+    background: white;
+    border: 1px solid #ccc;
+    color: black;
+  }
+
+  /* BADGES */
+
+  .badge {
+    padding: 2px 6px;
+    font-size: 12px;
+    border-radius: 6px;
+    color: white;
+  }
+
+  .badge-pendente {
+    background: #eab308;
+  }
+
+  .badge-homologada {
+    background: #22c55e;
+  }
+
+  .badge-rejeitada {
+    background: #ef4444;
+  }
+
+  /* TEXT COLORS */
+
+  .text-yellow { color: #ca8a04; }
+  .text-green { color: #16a34a; }
+  .text-red { color: #dc2626; }
+
+  .empty {
+    text-align: center;
+    padding: 20px;
+    color: #777;
+  }
+
+  .container {
+      max-width: 1100px;
+      margin: auto;
+      padding: 24px;
+    }
+
+    .flex {
+      display: flex;
+    }
+
+    .between {
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .card {
+      background: var(--color-card);
+      color: var(--color-card-foreground);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+    }
+
+    .muted {
+      color: var(--color-muted-foreground);
+      font-size: 14px;
+    }
+
+    .big {
+      font-size: 28px;
+    }
+
+    .progress {
+      height: 10px;
+      background: var(--color-muted);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      height: 100%;
+      background: var(--color-primary);
+    }
+
+    .input {
+      width: 100%;
+      height: 36px;
+      padding: 6px 10px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--color-border);
+      background: var(--color-input-background);
+      outline: none;
+    }
+
+    .input:focus {
+      box-shadow: 0 0 0 3px var(--color-ring);
+    }
+
+    .btn {
+      padding: 8px 14px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--color-border);
+      text-decoration: none;
+      color: var(--color-foreground);
+    }
+
+    .btn-primary {
+      background: var(--color-primary);
+      color: var(--color-primary-foreground);
+      border: none;
+    }
+
+    .atividade {
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      padding: 12px;
+      margin-top: 10px;
+      background: var(--color-card);
+    }
+
+    .badge {
+      font-size: 12px;
+      padding: 2px 6px;
+      border-radius: var(--radius-sm);
+      margin-left: 8px;
+    }
+
+    .ok {
+      background: color-mix(in oklab, var(--color-primary) 20%, transparent);
+    }
+
+    .pendente {
+      background: color-mix(in oklab, var(--color-chart-4) 30%, transparent);
+    }
+
+    .erro {
+      background: color-mix(in oklab, var(--color-destructive) 30%, transparent);
+      color: var(--color-destructive);
+    }
+
+
+  </style>
+</head>
+<body>
+
+<div class="page">
+  <div class="container">
+
+    <!-- HEADER -->
+    <div class="header">
+      <div>
+        <h1>Aprovação de Atividades</h1>
+        <p>Professor: {usuario.nome}</p>
+      </div>
+      
+      <a href="/logout" class="btn">Sair</a>
+
+    </div>
+
+    <!-- CARDS -->
+    <div class="grid-3">
+      <div class="card">
+        <div class="card-header">
+          <p>Pendentes</p>
+          <h2 class="text-yellow">{totalPendentes}</h2>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <p>Homologadas</p>
+          <h2 class="text-green">{totalHomologadas}</h2>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <p>Rejeitadas</p>
+          <h2 class="text-red">{totalRejeitadas}</h2>
+        </div>
+      </div>
+    </div>
+
+    <!-- LISTA -->
+    <div class="card">
+      <div class="card-header flex-between">
+        <div>
+          <h3>Lista de Atividades</h3>
+          <p>Analise e aprove as atividades dos alunos</p>
+        </div>
+
+        <form method="get">
+          <div class="form-group">
+          <select name="status" class="input" onchange="this.form.submit()">
+            <option value="todos">Todas</option>
+            <option value="pendente">Pendentes</option>
+            <option value="homologada">Homologadas</option>
+            <option value="rejeitada">Rejeitadas</option>
+          </select>
+          </div>
+        </form>
+      </div>
+
+      <div class="card-content">
+
+        {#for atividade in atividades}
+        <div class="atividade">
+          <div class="atividade-info">
+            <div class="atividade-header">
+              <strong>{atividade.aluno.nome}</strong>
+              <span class="badge badge-{atividade.estado}">
+                {atividade.estado}
+              </span>
+            </div>
+
+            <div class="atividade-meta">
+              <p>Email: {atividade.aluno.email}</p>
+              <p>Atividade: {atividade.tipo}</p>
+              <p>Horas: {atividade.horas}h</p>
+              <p>Data: {atividade.dataEnvio}</p>
+            </div>
+          </div>
+
+          <div class="atividade-actions">
+            <a class="btn btn-outline"
+              href="{atividade.certificado}">
+              Certificado
+            </a>
+
+            <a class="btn"
+               href="/atividades/{atividade.id}">
+              Analisar
+            </a>
+          </div>
+        </div>
+        {/for}
+
+        {#if atividades.size == 0}
+        <div class="empty">
+          Nenhuma atividade encontrada
+        </div>
+        {/if}
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>

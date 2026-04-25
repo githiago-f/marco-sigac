@@ -1,13 +1,35 @@
 package br.edu.ifrs.poa.model.atividades;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import br.edu.ifrs.poa.app.dtos.NovaAtividadeRequest;
+import io.quarkus.panache.common.Page;
 import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class AtividadesRepository {
+  public List<Atividade> listarAtividades(EstadoAtividade estado, String alunoId, Page page) {
+    var query = Atividade.sortedBy((Atividade a) -> a.dataEnvio);
+
+    return query
+        .limit(page.size)
+        .skip(page.index * page.size)
+        .toList();
+  }
+
+  public Map<EstadoAtividade, Long> contaAtividadesPorTipo() {
+    var homologados = Atividade.count("estado", EstadoAtividade.HOMOLOGADO);
+    var pendentes = Atividade.count("estado", EstadoAtividade.PENDENTE);
+    var rejeitados = Atividade.count("estado", EstadoAtividade.REJEITADO);
+
+    return Map.of(
+        EstadoAtividade.HOMOLOGADO, homologados,
+        EstadoAtividade.PENDENTE, pendentes,
+        EstadoAtividade.REJEITADO, rejeitados);
+  }
+
   public List<Atividade> buscarMinhasAtividades(String uid) {
     return Atividade.where((Atividade a) -> a.aluno.uid.equals(uid)).toList();
   }
@@ -15,7 +37,7 @@ public class AtividadesRepository {
   public Atividade novaAtividade(
       NovaAtividadeRequest novaAtividadeRequest,
       String caminhoDoCertificado,
-      Aluno aluno) {
+      Usuario aluno) {
     var atividade = new Atividade();
     atividade.estado = EstadoAtividade.PENDENTE;
     atividade.horas = novaAtividadeRequest.horas;
