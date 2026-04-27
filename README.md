@@ -1,66 +1,214 @@
-# atividades-complementares
+# Atividades complementares
+# 📘 Documentação Completa – Aplicação Quarkus + LDAP + PostgreSQL
 
-This project uses Quarkus, the Supersonic Subatomic Java Framework.
+---
 
-If you want to learn more about Quarkus, please visit its website: <https://quarkus.io/>.
+## 🎯 Objetivo
 
-## Running the application in dev mode
+Este documento descreve tudo o que é necessário para:
 
-You can run your application in dev mode that enables live coding using:
+* Configurar a aplicação
+* Instalar dependências
+* Preparar ambiente
+* Executar localmente ou em servidor
 
-```shell script
+---
+
+# 🧱 Requisitos do Sistema
+
+## 🔧 Dependências obrigatórias
+
+| Ferramenta | Versão recomendada     |
+| ---------- | ---------------------- |
+| Java       | 17+                    |
+| Maven      | 3.9+                   |
+| PostgreSQL | 13+                    |
+| LDAP       | OpenLDAP ou compatível |
+
+---
+
+## 📦 Instalação
+
+### ☕ Java
+
+```bash
+sudo apt install openjdk-17-jdk
+```
+
+### 📦 Maven
+
+```bash
+sudo apt install maven
+```
+
+### 🗄️ PostgreSQL
+
+```bash
+sudo apt install postgresql
+```
+
+Criar banco:
+
+```sql
+CREATE DATABASE atividades;
+```
+
+---
+
+## 🔐 LDAP (estrutura padrão)
+
+```
+dc=example,dc=com
+ ├── ou=people
+ │    └── uid=user1
+ └── ou=groups
+      └── cn=alunos
+```
+
+---
+
+# ⚙️ Configuração
+
+## 📄 Arquivo `.env`
+
+Crie um arquivo `.env` na raiz, podendo copiar o arquivo ".env.example" para ".env".
+
+Adicione mapeamento de função para os usuários. (Caso seu LDAP possua roles "alunos" e "professores" essa etapa não é necessária)
+
+```env
+# Usar variáveis de ambiente no formato “flattened” (limitado, mas funcional) do quarkus
+
+QUARKUS_HTTP_AUTH_ROLES_MAPPING__NOME_DA_ROLE_DE_ALUNOS__=aluno
+QUARKUS_HTTP_AUTH_ROLES_MAPPING__NOME_DA_ROLE_DE_PROFESSORES__=professor
+```
+
+---
+
+# 🚀 Execução
+
+## ▶️ Modo desenvolvimento
+
+```bash
+export $(cat .env | xargs)
 ./mvnw quarkus:dev
+
+# ou via CLI do quarkus 
+quarkus dev
 ```
 
-> **_NOTE:_**  Quarkus now ships with a Dev UI, which is available in dev mode only at <http://localhost:8080/q/dev/>.
+Acesse:
 
-## Packaging and running the application
-
-The application can be packaged using:
-
-```shell script
-./mvnw package
+```
+http://localhost:8080
 ```
 
-It produces the `quarkus-run.jar` file in the `target/quarkus-app/` directory.
-Be aware that it’s not an _über-jar_ as the dependencies are copied into the `target/quarkus-app/lib/` directory.
+---
 
-The application is now runnable using `java -jar target/quarkus-app/quarkus-run.jar`.
+## 📦 Build
 
-If you want to build an _über-jar_, execute the following command:
+```bash
+./mvnw clean package
+```
 
-```shell script
+Executar:
+
+```bash
+export $(cat .env | xargs)
+java -jar target/quarkus-app/quarkus-run.jar
+```
+
+---
+
+## 📦 Über-jar
+
+```bash
 ./mvnw package -Dquarkus.package.jar.type=uber-jar
+java -jar target/*-runner.jar
 ```
 
-The application, packaged as an _über-jar_, is now runnable using `java -jar target/*-runner.jar`.
+---
 
-## Creating a native executable
+## ⚡ Executável nativo
 
-You can create a native executable using:
-
-```shell script
+```bash
 ./mvnw package -Dnative
 ```
 
-Or, if you don't have GraalVM installed, you can run the native executable build in a container using:
+Ou sem GraalVM:
 
-```shell script
+```bash
 ./mvnw package -Dnative -Dquarkus.native.container-build=true
 ```
 
-You can then execute your native executable with: `./target/atividades-complementares-1.0.0-SNAPSHOT-runner`
+Executar:
 
-If you want to learn more about building native executables, please consult <https://quarkus.io/guides/maven-tooling>.
+```bash
+./target/atividades-complementares-1.0.0-SNAPSHOT-runner
+```
 
-## Related Guides
+---
 
-- REST ([guide](https://quarkus.io/guides/rest)): A Jakarta REST implementation utilizing build time processing and Vert.x. This extension is not compatible with the quarkus-resteasy extension, or any of the extensions that depend on it.
+# 🔐 Autenticação
 
-## Provided Code
+* Login via formulário
+* Página inicial: `/`
+* Redirecionamento: `/atividades`
 
-### REST
+### Roles padrão
 
-Easily start your REST Web Services
+| Grupo LDAP  | Role      |
+| ----------- | --------- |
+| alunos      | aluno     |
+| professores | professor |
 
-[Related guide section...](https://quarkus.io/guides/getting-started-reactive#reactive-jax-rs-resources)
+---
+
+# ⚠️ Problemas comuns
+
+---
+
+## LDAP não conecta
+
+Verifique:
+
+* URL
+* DN
+* senha
+* base DN
+
+---
+
+## Banco falhando
+
+* DB existe
+* credenciais corretas
+* porta aberta
+
+---
+
+# 🧠 Boas práticas
+
+* Nunca versionar `.env`
+* Usar secrets em produção
+* Evitar `hibernate update` em produção
+
+---
+
+# 📌 Resumo
+
+Para rodar:
+
+1. Instalar dependências
+2. Configurar `.env`
+3. Subir PostgreSQL e LDAP
+4. Rodar `quarkus:dev` ou `java -jar`
+
+---
+
+# ℹ️ Sobre o Quarkus
+
+Este projeto utiliza o Quarkus.
+
+Documentação oficial:
+[https://quarkus.io/](https://quarkus.io/)
+

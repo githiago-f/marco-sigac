@@ -4,19 +4,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import br.edu.ifrs.poa.app.dtos.FiltroDeAtividades;
 import br.edu.ifrs.poa.app.dtos.NovaAtividadeRequest;
-import io.quarkus.panache.common.Page;
 import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class AtividadesRepository {
-  public List<Atividade> listarAtividades(EstadoAtividade estado, String alunoId, Page page) {
-    var query = Atividade.sortedBy((Atividade a) -> a.dataEnvio);
+  public List<Atividade> listarAtividades(FiltroDeAtividades filtro) {
+    if (filtro.estado != null)
+      return Atividade.find("estado", filtro.estado).page(filtro.getPage()).list();
+    if (filtro.alunoId != null)
+      return Atividade.find("aluno.id", filtro.alunoId).page(filtro.getPage()).list();
 
-    return query
-        .limit(page.size)
-        .skip(page.index * page.size)
-        .toList();
+    return Atividade.sortedBy((Atividade a) -> a.dataEnvio).toList();
   }
 
   public Map<EstadoAtividade, Long> contaAtividadesPorTipo() {
@@ -51,13 +51,14 @@ public class AtividadesRepository {
     return atividade;
   }
 
-  public Optional<Atividade> alterarEstadoDaTarefa(Long atividadeId, EstadoAtividade estado) {
+  public Optional<Atividade> alterarEstadoDaTarefa(Long atividadeId, EstadoAtividade estado, String observacao) {
     var talvezAtividade = Atividade.where((Atividade a) -> a.id == atividadeId).findFirst();
     if (talvezAtividade.isEmpty()) {
       return Optional.empty();
     }
 
     var atividade = talvezAtividade.get();
+    atividade.observacao = observacao;
     atividade.estado = estado;
     atividade.persistAndFlush();
     return Optional.of(atividade);

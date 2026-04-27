@@ -5,8 +5,22 @@ networks:
 volumes:
   openldap_data:
     driver: local
+  postgres-data:
+    driver: local
 
 services:
+  db:
+    image: postgres:17
+    ports:
+      - 5432:5432
+    environment:
+     - POSTGRES_PASSWORD=senhapg
+     - POSTGRES_USER=usuario-pg
+     - POSTGRES_DB=atividades
+    volumes: 
+     - postgres-data:/var/lib/postgresql/data
+    mem_limit: 128m
+    cpus: 0.5
   openldap:
     image: lldap/lldap
     ports:
@@ -19,4 +33,5 @@ services:
     networks:
       - my-network
     volumes:
-      - openldap_data:/bitnami/openldap
+      - openldap_data:/data
+

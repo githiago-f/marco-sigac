@@ -12,6 +12,7 @@ import jakarta.persistence.ManyToOne;
 public class Atividade extends QubitEntity {
         @ManyToOne
         public TipoAtividade tipo;
+        public String observacao;
         public EstadoAtividade estado;
 
         Double horas;

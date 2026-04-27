@@ -5,221 +5,158 @@
   <title>Aprovação de Atividades</title>
   <link rel="stylesheet" href="/css/theme.css"/>
   <style>
-  .container {
-    max-width: 1200px;
-    margin: auto;
-    padding: 24px;
-  }
+  /* ===== LAYOUT BASE ===== */
 
-  .header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 32px;
-  }
+.container {
+  max-width: 1100px;
+  margin: auto;
+  padding: 24px;
+}
 
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.grid-3 {
+  display: grid;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+@media (min-width: 768px) {
   .grid-3 {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 16px;
-    margin-bottom: 32px;
+    grid-template-columns: repeat(3, 1fr);
   }
+}
 
-  @media (min-width: 768px) {
-    .grid-3 {
-      grid-template-columns: repeat(3, 1fr);
-    }
-  }
+.flex-between {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
 
-  .flex-between {
-    display: flex;
+/* ===== LISTA ===== */
+
+.atividade {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-card);
+}
+
+@media (min-width: 768px) {
+  .atividade {
+    flex-direction: row;
     justify-content: space-between;
     align-items: center;
   }
+}
 
-  .atividade {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    padding: 16px;
-    border: 1px solid #ddd;
-    border-radius: 10px;
-    margin-bottom: 12px;
-  }
+.atividade-header {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 4px;
+}
 
-  @media (min-width: 768px) {
-    .atividade {
-      flex-direction: row;
-      justify-content: space-between;
-      align-items: center;
-    }
-  }
+.atividade-meta {
+  font-size: 14px;
+  color: var(--color-muted-foreground);
+}
 
-  .atividade-header {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 6px;
-  }
+.atividade-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
 
-  .atividade-meta {
-    font-size: 14px;
-    color: #666;
-  }
+/* ===== BADGES ===== */
 
-  .atividade-actions {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
+.badge {
+  font-size: 12px;
+  padding: 2px 6px;
+  border-radius: 6px;
+}
 
-  .btn-outline {
-    background: white;
-    border: 1px solid #ccc;
-    color: black;
-  }
+.badge-pendente {
+  background: rgba(234,179,8,0.2);
+  color: #854d0e;
+}
 
-  /* BADGES */
+.badge-homologada {
+  background: rgba(34,197,94,0.2);
+  color: #166534;
+}
 
-  .badge {
-    padding: 2px 6px;
-    font-size: 12px;
-    border-radius: 6px;
-    color: white;
-  }
+.badge-rejeitada {
+  background: rgba(220,38,38,0.2);
+  color: #991b1b;
+}
 
-  .badge-pendente {
-    background: #eab308;
-  }
+/* ===== MODAL ===== */
 
-  .badge-homologada {
-    background: #22c55e;
-  }
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
 
-  .badge-rejeitada {
-    background: #ef4444;
-  }
+.modal-overlay.open {
+  display: flex;
+}
 
-  /* TEXT COLORS */
+.modal {
+  width: 100%;
+  max-width: 600px;
+  background: var(--color-card);
+  border-radius: var(--radius);
+  border: 1px solid var(--color-border);
+  padding: 20px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
 
-  .text-yellow { color: #ca8a04; }
-  .text-green { color: #16a34a; }
-  .text-red { color: #dc2626; }
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
 
-  .empty {
-    text-align: center;
-    padding: 20px;
-    color: #777;
-  }
+.modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
 
-  .container {
-      max-width: 1100px;
-      margin: auto;
-      padding: 24px;
-    }
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
 
-    .flex {
-      display: flex;
-    }
+.close-btn {
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  font-size: 18px;
+}
 
-    .between {
-      justify-content: space-between;
-      align-items: center;
-    }
+/* ===== EMPTY ===== */
 
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 12px;
-      margin-bottom: 20px;
-    }
-
-    .card {
-      background: var(--color-card);
-      color: var(--color-card-foreground);
-      border: 1px solid var(--color-border);
-      border-radius: var(--radius-lg);
-      padding: 16px;
-    }
-
-    .muted {
-      color: var(--color-muted-foreground);
-      font-size: 14px;
-    }
-
-    .big {
-      font-size: 28px;
-    }
-
-    .progress {
-      height: 10px;
-      background: var(--color-muted);
-      border-radius: var(--radius-lg);
-      overflow: hidden;
-    }
-
-    .progress-bar {
-      height: 100%;
-      background: var(--color-primary);
-    }
-
-    .input {
-      width: 100%;
-      height: 36px;
-      padding: 6px 10px;
-      border-radius: var(--radius-md);
-      border: 1px solid var(--color-border);
-      background: var(--color-input-background);
-      outline: none;
-    }
-
-    .input:focus {
-      box-shadow: 0 0 0 3px var(--color-ring);
-    }
-
-    .btn {
-      padding: 8px 14px;
-      border-radius: var(--radius-md);
-      border: 1px solid var(--color-border);
-      text-decoration: none;
-      color: var(--color-foreground);
-    }
-
-    .btn-primary {
-      background: var(--color-primary);
-      color: var(--color-primary-foreground);
-      border: none;
-    }
-
-    .atividade {
-      border: 1px solid var(--color-border);
-      border-radius: var(--radius-md);
-      padding: 12px;
-      margin-top: 10px;
-      background: var(--color-card);
-    }
-
-    .badge {
-      font-size: 12px;
-      padding: 2px 6px;
-      border-radius: var(--radius-sm);
-      margin-left: 8px;
-    }
-
-    .ok {
-      background: color-mix(in oklab, var(--color-primary) 20%, transparent);
-    }
-
-    .pendente {
-      background: color-mix(in oklab, var(--color-chart-4) 30%, transparent);
-    }
-
-    .erro {
-      background: color-mix(in oklab, var(--color-destructive) 30%, transparent);
-      color: var(--color-destructive);
-    }
-
-
-  </style>
+.empty {
+  text-align: center;
+  padding: 20px;
+  color: var(--color-muted-foreground);
+}  </style>
 </head>
 <body>
 
@@ -271,11 +208,11 @@
 
         <form method="get">
           <div class="form-group">
-          <select name="status" class="input" onchange="this.form.submit()">
-            <option value="todos">Todas</option>
-            <option value="pendente">Pendentes</option>
-            <option value="homologada">Homologadas</option>
-            <option value="rejeitada">Rejeitadas</option>
+          <select name="estado" class="input" onchange="this.form.submit()">
+            <option value="" {filtroEstado == null ? "selected" : ""}>Todas</option>
+            <option value="pendente" {filtroEstado.equals("pendente") ? "selected" : ""}>Pendentes</option>
+            <option value="homologado" {filtroEstado.equals("homologado") ? "selected" : ""}>Homologadas</option>
+            <option value="rejeitado" {filtroEstado.equals("rejeitado") ? "selected" : ""}>Rejeitadas</option>
           </select>
           </div>
         </form>
@@ -294,8 +231,7 @@
             </div>
 
             <div class="atividade-meta">
-              <p>Email: {atividade.aluno.email}</p>
-              <p>Atividade: {atividade.tipo}</p>
+              <p>Atividade: {atividade.tipo.nome}</p>
               <p>Horas: {atividade.horas}h</p>
               <p>Data: {atividade.dataEnvio}</p>
             </div>
@@ -307,10 +243,17 @@
               Certificado
             </a>
 
-            <a class="btn"
-               href="/atividades/{atividade.id}">
+            <button class="btn"
+              onclick="openModal(
+                '{atividade.id}',
+                '{atividade.aluno.nome}',
+                '{atividade.tipo.nome}',
+                '{atividade.horas}',
+                '{atividade.dataEnvio}',
+                '{atividade.estado}'
+              )">
               Analisar
-            </a>
+            </button>
           </div>
         </div>
         {/for}
@@ -326,6 +269,28 @@
 
   </div>
 </div>
+<!-- MODAL -->
+<div id="modal" class="modal-overlay">
+  <div class="modal">
 
+    <div class="modal-header">
+      <h3>Análise de Atividade</h3>
+      <button class="close-btn" onclick="closeModal()">✕</button>
+    </div>
+
+    <div class="modal-body" id="modal-content">
+      <!-- conteúdo injetado via JS -->
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal()">Cancelar</button>
+      <button class="btn" onclick="rejeitar()">Rejeitar</button>
+      <button class="btn btn-primary" onclick="aprovar()">Aprovar</button>
+    </div>
+
+  </div>
+</div>
+
+<script src="/js/script.js"></script>
 </body>
 </html>

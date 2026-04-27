@@ -2,16 +2,18 @@ package br.edu.ifrs.poa.app.rotas;
 
 import java.io.IOException;
 import java.net.URI;
-import java.util.List;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import br.edu.ifrs.poa.app.dtos.FiltroDeAtividades;
 import br.edu.ifrs.poa.app.dtos.NovaAtividadeRequest;
+import br.edu.ifrs.poa.app.dtos.Observacao;
 import br.edu.ifrs.poa.infra.ProvedorDeArmazenamento;
 import br.edu.ifrs.poa.model.atividades.Usuario;
 import br.edu.ifrs.poa.model.atividades.AtividadesRepository;
 import br.edu.ifrs.poa.model.atividades.EstadoAtividade;
-import io.quarkus.panache.common.Page;
 import io.quarkus.qute.Template;
 import io.quarkus.security.identity.SecurityIdentity;
 import jakarta.annotation.security.RolesAllowed;
@@ -24,6 +26,8 @@ import jakarta.ws.rs.core.Response;
 
 @Path("/atividades")
 public class AtividadesComplementaresRotas {
+  private static final Logger logger = LoggerFactory.getLogger(AtividadesComplementaresRotas.class);
+
   @Inject
   AtividadesRepository atividadesRepository;
 
@@ -38,7 +42,7 @@ public class AtividadesComplementaresRotas {
 
   @GET
   @Path("/certificados/{arquivo}")
-  @RolesAllowed("professores")
+  @RolesAllowed("professor")
   @Produces(MediaType.APPLICATION_OCTET_STREAM)
   public Response verArquivo(@PathParam("arquivo") String arquivo) {
     var stream = provedorDeArmazenamento.lerArquivo(arquivo);
@@ -47,7 +51,19 @@ public class AtividadesComplementaresRotas {
 
   @POST
   @Transactional
-  @RolesAllowed("alunos")
+  @Path("/{atividadeId}/{estado}")
+  @RolesAllowed("professor")
+  @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+  public void atualizarAtividade(@PathParam("atividadeId") Long atividadeId,
+      @PathParam("estado") EstadoAtividade estado,
+      Observacao corpo,
+      @Context SecurityIdentity securityIdentity) {
+    atividadesRepository.alterarEstadoDaTarefa(atividadeId, estado, corpo.observacoes);
+  }
+
+  @POST
+  @Transactional
+  @RolesAllowed("aluno")
   @Consumes(MediaType.MULTIPART_FORM_DATA)
   public Response novaAtividade(NovaAtividadeRequest novaAtividadeRequest, @Context SecurityIdentity securityIdentity) {
     var aluno = new Usuario(securityIdentity);
@@ -72,7 +88,7 @@ public class AtividadesComplementaresRotas {
 
   @GET
   @Path("/registrar")
-  @RolesAllowed("alunos")
+  @RolesAllowed("aluno")
   @Produces(MediaType.TEXT_HTML)
   public String novaAtividade(@QueryParam("erro") String erro) {
     var tipos = atividadesRepository.buscarTodosOsTipos();
@@ -100,19 +116,20 @@ public class AtividadesComplementaresRotas {
         .data("horasPendentes", horasPendentes)
         .data("horasFaltantes", totalHoras - horasHomologadas)
         .data("horasEnviadas", horasHomologadas + horasPendentes)
-        .data("progresso", (horasHomologadas * 100) / totalHoras)
-        .data("atividades", minhasAtividades)
+        .data("progresso", ((int) ((horasHomologadas * 100) / totalHoras) * 10) / 10.0)
         .data("horasTotais", totalHoras)
+        .data("atividades", minhasAtividades)
         .render();
 
   }
 
-  public String verAtividadesProfessor(Usuario usuario, Page page) {
+  public String verAtividadesProfessor(Usuario usuario, FiltroDeAtividades filtro) {
     var totais = atividadesRepository.contaAtividadesPorTipo();
-    var atividades = atividadesRepository.listarAtividades(null, null, page);
+    var atividades = atividadesRepository.listarAtividades(filtro);
 
     return aprovacao
         .data("usuario", usuario)
+        .data("filtroEstado", filtro.estado != null ? filtro.estado.getLabel() : null)
         .data("totalPendentes", totais.get(EstadoAtividade.PENDENTE))
         .data("totalHomologadas", totais.get(EstadoAtividade.HOMOLOGADO))
         .data("totalRejeitadas", totais.get(EstadoAtividade.REJEITADO))
@@ -121,14 +138,17 @@ public class AtividadesComplementaresRotas {
   }
 
   @GET
-  @RolesAllowed({ "alunos", "professores" })
+  @RolesAllowed({ "aluno", "professor" })
   @Produces(MediaType.TEXT_HTML)
-  public String verAtividades(@QueryParam("page") int page, @QueryParam("size") int size,
+  public String verAtividades(
+      @BeanParam FiltroDeAtividades filtro,
       @Context SecurityIdentity securityIdentity) {
+    logger.info("Roles: {}", securityIdentity.getRoles());
+    logger.info("Filtro={}", filtro);
     var usuario = new Usuario(securityIdentity);
 
     if (securityIdentity.hasRole("professores")) {
-      return verAtividadesProfessor(usuario, Page.of(page, size == 0 ? 10 : size));
+      return verAtividadesProfessor(usuario, filtro);
     }
 
     return verAtividadesAluno(usuario);
