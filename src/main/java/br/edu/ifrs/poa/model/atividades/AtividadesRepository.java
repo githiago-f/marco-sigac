@@ -1,22 +1,97 @@
 package br.edu.ifrs.poa.model.atividades;
 
+import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import br.edu.ifrs.poa.app.dtos.FiltroDeAtividades;
 import br.edu.ifrs.poa.app.dtos.NovaAtividadeRequest;
+import io.agroal.api.AgroalDataSource;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 
 @ApplicationScoped
 public class AtividadesRepository {
-  public List<Atividade> listarAtividades(FiltroDeAtividades filtro) {
-    if (filtro.estado != null)
-      return Atividade.find("estado", filtro.estado).page(filtro.getPage()).list();
-    if (filtro.alunoId != null)
-      return Atividade.find("aluno.id", filtro.alunoId).page(filtro.getPage()).list();
+  @Inject
+  AgroalDataSource dataSource;
 
-    return Atividade.sortedBy((Atividade a) -> a.dataEnvio).toList();
+  private static final Logger log = LoggerFactory.getLogger(AtividadesRepository.class);
+
+  public record PaginaDeAtividades(Long paginas, Long total, List<Atividade> atividades) {
+  }
+
+  public PaginaDeAtividades listarAtividades(FiltroDeAtividades filtro) {
+    List<String> queries = new ArrayList<>();
+
+    var page = filtro.getPagina();
+
+    if (filtro.estado != null) {
+      queries.add("and estado = ?");
+    }
+    if (filtro.alunoId != null) {
+      queries.add("and alunoId = ? ");
+    }
+
+    int offset = page.index * page.size;
+    String sqlFiltros = " where 1=1 " + String.join(" ", queries);
+
+    String buscaAtividades = "select a.*, ta.nome as ta_nome, ta.* from atividades a left join tipos_atividade ta on ta.id = a.tipo_id"
+        + sqlFiltros + "  offset " + offset + " limit " + page.size;
+    String contaAtividades = "select count(*) as total from atividades " + sqlFiltros;
+
+    log.info("query busca: {}", buscaAtividades);
+    log.info("query conta: {}", contaAtividades);
+
+    List<Atividade> listaAtividades = new ArrayList<>();
+    Long total = 0l;
+
+    try (var cnn = dataSource.getConnection(); var r = cnn.prepareStatement(buscaAtividades);) {
+      if(filtro.estado != null) r.setInt(1, filtro.estado.ordinal());
+      if(filtro.alunoId != null) r.setNString(queries.size(), filtro.alunoId);
+
+      var linhas = r.executeQuery();
+      while (linhas.next()) {
+        var a = new Atividade();
+        a.id = linhas.getLong("id");
+        a.horas = linhas.getDouble("horas");
+        a.estado = EstadoAtividade.fromOrdinal(linhas.getInt("estado"));
+        a.aluno = new Usuario(linhas.getString("uid"), linhas.getString("nome"));
+        a.certificado = linhas.getString("certificado");
+        a.observacao = linhas.getString("observacao");
+        a.dataEnvio = linhas.getDate("dataEnvio");
+
+        a.tipo = new TipoAtividade(linhas.getString("ta_nome"), linhas.getString("descricao"),
+            linhas.getDouble("limite"));
+
+        listaAtividades.add(a);
+      }
+
+      linhas.close();
+    } catch (SQLException e) {
+      e.printStackTrace();
+    }
+
+    try (var cnn = dataSource.getConnection();
+        var r = cnn.prepareStatement(contaAtividades);) {
+      if(filtro.estado != null) r.setInt(1, filtro.estado.ordinal());
+      if(filtro.alunoId != null) r.setNString(queries.size(), filtro.alunoId);
+
+      var contagem = r.executeQuery();
+
+      contagem.next();
+      total = contagem.getLong("total");
+
+      contagem.close();
+    } catch (SQLException e) {
+      e.printStackTrace();
+    }
+
+    return new PaginaDeAtividades(total / page.size, total, listaAtividades);
   }
 
   public Map<EstadoAtividade, Long> contaAtividadesPorTipo() {

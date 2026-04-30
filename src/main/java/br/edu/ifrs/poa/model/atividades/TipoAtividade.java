@@ -2,8 +2,10 @@ package br.edu.ifrs.poa.model.atividades;
 
 import io.quarkiverse.qubit.QubitEntity;
 import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 
 @Entity
+@Table(name = "tipos_atividade")
 public class TipoAtividade extends QubitEntity {
         public String nome;
         public String descricao;

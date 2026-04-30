@@ -7,8 +7,10 @@ import org.hibernate.annotations.CreationTimestamp;
 import io.quarkiverse.qubit.QubitEntity;
 import jakarta.persistence.Entity;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 
 @Entity
+@Table(name = "atividades")
 public class Atividade extends QubitEntity {
         @ManyToOne
         public TipoAtividade tipo;

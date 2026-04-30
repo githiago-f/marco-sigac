@@ -2,6 +2,7 @@ package br.edu.ifrs.poa.app.rotas;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.stream.IntStream;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
@@ -125,7 +126,8 @@ public class AtividadesComplementaresRotas {
 
   public String verAtividadesProfessor(Usuario usuario, FiltroDeAtividades filtro) {
     var totais = atividadesRepository.contaAtividadesPorTipo();
-    var atividades = atividadesRepository.listarAtividades(filtro);
+    var paginaAtividades = atividadesRepository.listarAtividades(filtro);
+    var paginas = IntStream.rangeClosed(1, Math.toIntExact(paginaAtividades.paginas()) + 1).toArray();
 
     return aprovacao
         .data("usuario", usuario)
@@ -133,7 +135,11 @@ public class AtividadesComplementaresRotas {
         .data("totalPendentes", totais.get(EstadoAtividade.PENDENTE))
         .data("totalHomologadas", totais.get(EstadoAtividade.HOMOLOGADO))
         .data("totalRejeitadas", totais.get(EstadoAtividade.REJEITADO))
-        .data("atividades", atividades)
+        .data("atividades", paginaAtividades.atividades())
+        .data("paginas", paginas)
+        .data("total", paginaAtividades.total())
+        .data("paginaAtual", filtro.pagina)
+        .data("tamanho", filtro.tamanho)
         .render();
   }
 

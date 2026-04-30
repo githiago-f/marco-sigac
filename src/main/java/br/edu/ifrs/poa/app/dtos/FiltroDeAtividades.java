@@ -5,18 +5,18 @@ import io.quarkus.panache.common.Page;
 import jakarta.ws.rs.QueryParam;
 
 public class FiltroDeAtividades {
-  @QueryParam("page")
-  public Integer page = 0;
-  @QueryParam("size")
-  public Integer size = 0;
+  @QueryParam("pagina")
+  public Integer pagina = 1;
+  @QueryParam("tamanho")
+  public Integer tamanho = 0;
   @QueryParam("estado")
   public EstadoAtividade estado;
   @QueryParam("alunoId")
   public String alunoId;
 
-  public FiltroDeAtividades(Integer page, Integer size, EstadoAtividade estado, String alunoId) {
-    this.page = page;
-    this.size = size;
+  public FiltroDeAtividades(Integer pagina, Integer tamanho, EstadoAtividade estado, String alunoId) {
+    this.pagina = pagina;
+    this.tamanho = tamanho;
     this.estado = estado;
     this.alunoId = alunoId;
   }
@@ -24,12 +24,13 @@ public class FiltroDeAtividades {
   public FiltroDeAtividades() {
   }
 
-  public Page getPage() {
-    return Page.of(page, size == 0 ? 10 : size);
+  public Page getPagina() {
+    return Page.of(pagina - 1, tamanho == 0 ? 10 : tamanho);
   }
 
   @Override
   public String toString() {
-    return "FiltroDeAtividades [page=" + page + ", size=" + size + ", estado=" + estado + ", alunoId=" + alunoId + "]";
+    return "FiltroDeAtividades [page=" + pagina + ", size=" + tamanho + ", estado=" + estado + ", alunoId=" + alunoId
+        + "]";
   }
 }
