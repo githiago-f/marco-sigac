@@ -15,4 +15,8 @@ public class NovaAtividadeRequest {
   @RestForm("arquivo")
   @PartType(MediaType.APPLICATION_OCTET_STREAM)
   public FileUpload arquivo;
+
+  public Long getTipoId() {
+    return Long.valueOf(tipo);
+  }
 }

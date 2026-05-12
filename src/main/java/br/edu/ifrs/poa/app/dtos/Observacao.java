@@ -5,4 +5,6 @@ import jakarta.ws.rs.FormParam;
 public class Observacao {
   @FormParam("observacoes")
   public String observacoes;
+  @FormParam("horas")
+  public Double horasAprovadas;
 }

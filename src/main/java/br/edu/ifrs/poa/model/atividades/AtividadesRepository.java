@@ -51,8 +51,10 @@ public class AtividadesRepository {
     Long total = 0l;
 
     try (var cnn = dataSource.getConnection(); var r = cnn.prepareStatement(buscaAtividades);) {
-      if(filtro.estado != null) r.setInt(1, filtro.estado.ordinal());
-      if(filtro.alunoId != null) r.setNString(queries.size(), filtro.alunoId);
+      if (filtro.estado != null)
+        r.setInt(1, filtro.estado.ordinal());
+      if (filtro.alunoId != null)
+        r.setNString(queries.size(), filtro.alunoId);
 
       var linhas = r.executeQuery();
       while (linhas.next()) {
@@ -78,8 +80,10 @@ public class AtividadesRepository {
 
     try (var cnn = dataSource.getConnection();
         var r = cnn.prepareStatement(contaAtividades);) {
-      if(filtro.estado != null) r.setInt(1, filtro.estado.ordinal());
-      if(filtro.alunoId != null) r.setNString(queries.size(), filtro.alunoId);
+      if (filtro.estado != null)
+        r.setInt(1, filtro.estado.ordinal());
+      if (filtro.alunoId != null)
+        r.setNString(queries.size(), filtro.alunoId);
 
       var contagem = r.executeQuery();
 
@@ -117,8 +121,7 @@ public class AtividadesRepository {
     atividade.estado = EstadoAtividade.PENDENTE;
     atividade.horas = novaAtividadeRequest.horas;
     atividade.aluno = aluno;
-    atividade.tipo = buscaTipoPorNome(novaAtividadeRequest.tipo)
-        .orElseThrow(() -> new RuntimeException("Tipo de atividade inválido"));
+    atividade.tipo = TipoAtividade.findById(novaAtividadeRequest.getTipoId());
     atividade.certificado = caminhoDoCertificado;
 
     atividade.persistAndFlush();
@@ -126,7 +129,8 @@ public class AtividadesRepository {
     return atividade;
   }
 
-  public Optional<Atividade> alterarEstadoDaTarefa(Long atividadeId, EstadoAtividade estado, String observacao) {
+  public Optional<Atividade> alterarEstadoDaTarefa(Long atividadeId, EstadoAtividade estado, String observacao,
+      Double horas) {
     var talvezAtividade = Atividade.where((Atividade a) -> a.id == atividadeId).findFirst();
     if (talvezAtividade.isEmpty()) {
       return Optional.empty();
@@ -134,13 +138,22 @@ public class AtividadesRepository {
 
     var atividade = talvezAtividade.get();
     atividade.observacao = observacao;
+
+    if (estado == EstadoAtividade.HOMOLOGADO)
+      atividade.horasHomologadas = horas;
+
     atividade.estado = estado;
     atividade.persistAndFlush();
     return Optional.of(atividade);
   }
 
-  public List<String> buscarTodosOsTipos() {
-    return TipoAtividade.select((TipoAtividade ta) -> ta.nome).toList();
+  public record Tipo(Long id, String nome, String descricao, Double limite) {
+  }
+
+  public List<Tipo> buscarTodosOsTipos() {
+    return TipoAtividade
+        .select((TipoAtividade ta) -> new Tipo(ta.id, ta.nome, ta.descricao, ta.limite))
+        .toList();
   }
 
   public Optional<TipoAtividade> buscaTipoPorNome(String nome) {

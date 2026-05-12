@@ -15,6 +15,8 @@ function openModal(id, nome, tipo, horas, data, status) {
     <div class="form-group">
       <label>Observações</label>
       <textarea class="input" id="obs" rows="3"></textarea>
+      <label>Horas aprovadas</label>
+      <input class="input" id="horas" type="number" value="${horas}"/>
     </div>
   `;
 
@@ -28,11 +30,12 @@ function closeModal() {
 
 function aprovar() {
   const obs = document.getElementById('obs').value;
+  const horas = document.getElementById("horas").value;
 
   fetch(`/atividades/${currentId}/homologado`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: `observacoes=${obs.trim() == '' ? 'Aprovado pelo professor' : obs}`
+    body: `observacoes=${obs.trim() == '' ? 'Aprovado pelo professor' : obs}&horas=${horas}`
   }).then(() => location.reload());
 }
 
@@ -47,6 +50,6 @@ function rejeitar() {
   fetch(`/atividades/${currentId}/rejeitado`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: `observacoes=${obs}`
+    body: `observacoes=${obs}&horas=0`
   }).then(() => location.reload());
 }

@@ -2,11 +2,14 @@ package br.edu.ifrs.poa.app.rotas;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import br.edu.ifrs.poa.app.dtos.FiltroDeAtividades;
 import br.edu.ifrs.poa.app.dtos.NovaAtividadeRequest;
@@ -59,7 +62,7 @@ public class AtividadesComplementaresRotas {
       @PathParam("estado") EstadoAtividade estado,
       Observacao corpo,
       @Context SecurityIdentity securityIdentity) {
-    atividadesRepository.alterarEstadoDaTarefa(atividadeId, estado, corpo.observacoes);
+    atividadesRepository.alterarEstadoDaTarefa(atividadeId, estado, corpo.observacoes, corpo.horasAprovadas);
   }
 
   @POST
@@ -93,9 +96,21 @@ public class AtividadesComplementaresRotas {
   @Produces(MediaType.TEXT_HTML)
   public String novaAtividade(@QueryParam("erro") String erro) {
     var tipos = atividadesRepository.buscarTodosOsTipos();
+
+    var jsonTipos = "{}";
+    try {
+      var writer = new ObjectMapper();
+      var descricaoPorNome = tipos.stream().collect(Collectors.toMap(t -> t.id(), t -> t));
+      jsonTipos = writer.writeValueAsString(descricaoPorNome);
+    } catch (Exception e) {
+      e.printStackTrace();
+      erro = "Tipos cadastrados apresentam um erro";
+    }
+
     return novaAtividade
         .data("erro", erro)
         .data("tipos", tipos.toArray())
+        .data("jsonTipos", jsonTipos)
         .render();
   }
 

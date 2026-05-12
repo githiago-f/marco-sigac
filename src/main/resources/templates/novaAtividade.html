@@ -97,21 +97,21 @@
       <p class="muted">Envie seu certificado em PDF</p>
 
       {#if erro}
-        <div class="error">{form.erro}</div>
+        <div class="error">{erro}</div>
       {/if}
 
       <form method="POST" action="/atividades" enctype="multipart/form-data">
         <div class="form-group">
           <label>Tipo *</label>
-          <select name="tipo" class="input" required>
+          <select name="tipo" id="tipo" class="input" onchange="selecionarTipo()" required>
 
             {#for t in tipos}
-              <option value="{t}">
-                {t}
+              <option value="{t.id}">
+                {t.nome}
               </option>
             {/for}
-
           </select>
+          <p id="descricao"></p>
         </div>
 
         <div class="form-group">
@@ -136,7 +136,8 @@
           <ul>
             <li>PDF obrigatório</li>
             <li>Horas devem bater com certificado</li>
-            <li>Máximo total: 70h</li>
+            <li>Máximo total: 70 horas</li>
+            <li>Máximo da atividade: <span id="maxAtividade">0h</span></li>
           </ul>
         </div>
 
@@ -148,5 +149,22 @@
       </form>
     </div>
   </div>
+
+  <script>
+    const str = "{jsonTipos}".replaceAll("&quot;", '"').replaceAll("\n", "")
+    console.log(str);
+    const tipos = JSON.parse(str);
+    console.log(tipos);
+
+    const container = document.getElementById("descricao");
+    const maxHoras = document.getElementById("maxAtividade");
+    const tipo = document.getElementById("tipo")
+    function selecionarTipo() {
+      container.innerText = tipos[tipo.value].descricao;
+      maxHoras.innerText = tipos[tipo.value].limite + " horas";
+    }
+
+    selecionarTipo();
+  </script>
 </body>
 </html>

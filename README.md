@@ -47,11 +47,28 @@ sudo apt install maven
 sudo apt install postgresql
 ```
 
-Criar banco:
+Criar banco, caso não exista:
 
 ```sql
 CREATE DATABASE atividades;
 ```
+
+### 🗄️ Flyway: Estratégia recomendada
+
+ [!ERROR] **Nunca:**
+  - editar migration antiga já aplicada
+  - deletar migration aplicada em produção
+  - usar auto-ddl do Hibernate em produção
+
+ [!WARNING] Evite:
+  `hibernate.hbm2ddl.auto=update` Isso destrói previsibilidade.
+
+#### Fluxo ideal
+ 1. altera entidade/modelo
+ 2. cria migration SQL
+ 3. commit junto
+ 4. CI sobe banco limpo
+ 5. Flyway aplica tudo automaticamente
 
 ---
 
