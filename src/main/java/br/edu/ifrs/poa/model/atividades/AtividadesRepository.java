@@ -9,11 +9,16 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import br.edu.ifrs.poa.app.dtos.FiltroDeAtividades;
 import br.edu.ifrs.poa.app.dtos.NovaAtividadeRequest;
 import io.agroal.api.AgroalDataSource;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
 
 @ApplicationScoped
 public class AtividadesRepository {
@@ -21,6 +26,57 @@ public class AtividadesRepository {
   AgroalDataSource dataSource;
 
   private static final Logger log = LoggerFactory.getLogger(AtividadesRepository.class);
+  private final ObjectMapper mapper = new ObjectMapper();
+
+  public record AtividadeDTO(
+      Long atividadeId,
+      String titulo,
+      String observacao,
+      String tipoAtividade,
+      Double horas,
+      String certificado) {
+  }
+
+  public record EnvelopeDTO(
+      String uid,
+      Double horasHomologadasTotal,
+      List<AtividadeDTO> atividades) {
+  }
+
+  public List<EnvelopeDTO> lerCaixaDeCorreio() {
+    var query = "SELECT * FROM caixa_de_correio";
+    try (var cnn = dataSource.getConnection();
+        var r = cnn.prepareStatement(query);
+        var rs = r.executeQuery()) {
+      log.info("query : {}", query);
+      var envelopes = new ArrayList<EnvelopeDTO>();
+
+      while (rs.next()) {
+        var uid = rs.getString("uid");
+
+        var horasHomologadasTotal = rs.getDouble("horas_homologadas_total");
+
+        var atividadesJson = rs.getString("atividades");
+        var typeRef = new TypeReference<List<AtividadeDTO>>() {
+        };
+
+        List<AtividadeDTO> atividades = mapper.readValue(atividadesJson, typeRef);
+
+        var caixa = new EnvelopeDTO(
+            uid,
+            horasHomologadasTotal,
+            atividades);
+
+        envelopes.add(caixa);
+      }
+
+      return envelopes;
+    } catch (SQLException | JsonProcessingException e) {
+      e.printStackTrace();
+
+      return new ArrayList<>();
+    }
+  }
 
   public record PaginaDeAtividades(Long paginas, Long total, List<Atividade> atividades) {
   }
@@ -40,7 +96,7 @@ public class AtividadesRepository {
     int offset = page.index * page.size;
     String sqlFiltros = " where 1=1 " + String.join(" ", queries);
 
-    String buscaAtividades = "select a.*, ta.nome as ta_nome, ta.* from atividades a left join tipos_atividade ta on ta.id = a.tipo_id"
+    String buscaAtividades = "select a.*, ta.* from atividades a left join tipos_atividade ta on ta.id = a.tipo_id"
         + sqlFiltros + "  offset " + offset + " limit " + page.size;
     String contaAtividades = "select count(*) as total from atividades " + sqlFiltros;
 
@@ -60,14 +116,16 @@ public class AtividadesRepository {
       while (linhas.next()) {
         var a = new Atividade();
         a.id = linhas.getLong("id");
+        a.titulo = linhas.getString("titulo");
         a.horas = linhas.getDouble("horas");
-        a.estado = EstadoAtividade.fromOrdinal(linhas.getInt("estado"));
-        a.aluno = new Usuario(linhas.getString("uid"), linhas.getString("nome"));
+        a.horasHomologadas = linhas.getDouble("horasHomologadas");
+        a.estado = EstadoAtividade.valueOf(linhas.getString("estado"));
+        a.aluno = new Usuario(linhas.getString("uid"), linhas.getString("nome_aluno"));
         a.certificado = linhas.getString("certificado");
         a.observacao = linhas.getString("observacao");
         a.dataEnvio = linhas.getDate("dataEnvio");
 
-        a.tipo = new TipoAtividade(linhas.getString("ta_nome"), linhas.getString("descricao"),
+        a.tipo = new TipoAtividade(linhas.getString("nome"), linhas.getString("descricao"),
             linhas.getDouble("limite"));
 
         listaAtividades.add(a);
@@ -110,7 +168,7 @@ public class AtividadesRepository {
   }
 
   public List<Atividade> buscarMinhasAtividades(String uid) {
-    return Atividade.where((Atividade a) -> a.aluno.uid.equals(uid)).toList();
+    return Atividade.find("aluno.uid", uid).list();
   }
 
   public Atividade novaAtividade(
@@ -118,6 +176,7 @@ public class AtividadesRepository {
       String caminhoDoCertificado,
       Usuario aluno) {
     var atividade = new Atividade();
+    atividade.titulo = novaAtividadeRequest.titulo;
     atividade.estado = EstadoAtividade.PENDENTE;
     atividade.horas = novaAtividadeRequest.horas;
     atividade.aluno = aluno;
@@ -129,7 +188,12 @@ public class AtividadesRepository {
     return atividade;
   }
 
-  public Optional<Atividade> alterarEstadoDaTarefa(Long atividadeId, EstadoAtividade estado, String observacao,
+  @Transactional
+  public Optional<Atividade> alterarEstadoDaAtividade(Long atividadeId, EstadoAtividade estado) {
+    return alterarEstadoDaAtividade(atividadeId, estado, null, null);
+  }
+
+  public Optional<Atividade> alterarEstadoDaAtividade(Long atividadeId, EstadoAtividade estado, String observacao,
       Double horas) {
     var talvezAtividade = Atividade.where((Atividade a) -> a.id == atividadeId).findFirst();
     if (talvezAtividade.isEmpty()) {
@@ -137,7 +201,8 @@ public class AtividadesRepository {
     }
 
     var atividade = talvezAtividade.get();
-    atividade.observacao = observacao;
+    if (observacao != null)
+      atividade.observacao = observacao;
 
     if (estado == EstadoAtividade.HOMOLOGADO)
       atividade.horasHomologadas = horas;

@@ -102,6 +102,15 @@
 
       <form method="POST" action="/atividades" enctype="multipart/form-data">
         <div class="form-group">
+          <label>Titulo *</label>
+          <input
+            class="input"
+            name="titulo"
+            required
+          />
+        </div>
+
+        <div class="form-group">
           <label>Tipo *</label>
           <select name="tipo" id="tipo" class="input" onchange="selecionarTipo()" required>
 

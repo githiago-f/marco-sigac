@@ -7,6 +7,8 @@ import org.jboss.resteasy.reactive.multipart.FileUpload;
 
 public class NovaAtividadeRequest {
   @RestForm
+  public String titulo;
+  @RestForm
   public String tipo;
 
   @RestForm

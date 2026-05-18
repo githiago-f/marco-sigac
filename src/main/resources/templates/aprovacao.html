@@ -227,14 +227,14 @@
         <div class="atividade">
           <div class="atividade-info">
             <div class="atividade-header">
-              <strong>{atividade.aluno.nome}</strong>
+              <strong>{atividade.titulo} | {atividade.tipo.nome}</strong>
               <span class="badge badge-{atividade.estado.label}">
                 {atividade.estado.label}
               </span>
             </div>
 
             <div class="atividade-meta">
-              <p>Atividade: {atividade.tipo.nome}</p>
+              <p>Aluno: {atividade.aluno.nome}</p>
               <p>Horas: {atividade.horas}h</p>
               <p>Data: {atividade.dataEnvio}</p>
             </div>
@@ -249,11 +249,12 @@
             <button class="btn"
               onclick="openModal(
                 '{atividade.id}',
+                '{atividade.titulo}',
                 '{atividade.aluno.nome}',
                 '{atividade.tipo.nome}',
                 '{atividade.horas}',
                 '{atividade.dataEnvio}',
-                '{atividade.estado}'
+                '{atividade.estado.label}'
               )">
               Analisar
             </button>

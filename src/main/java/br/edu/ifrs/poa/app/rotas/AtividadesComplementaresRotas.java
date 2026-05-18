@@ -62,7 +62,7 @@ public class AtividadesComplementaresRotas {
       @PathParam("estado") EstadoAtividade estado,
       Observacao corpo,
       @Context SecurityIdentity securityIdentity) {
-    atividadesRepository.alterarEstadoDaTarefa(atividadeId, estado, corpo.observacoes, corpo.horasAprovadas);
+    atividadesRepository.alterarEstadoDaAtividade(atividadeId, estado, corpo.observacoes, corpo.horasAprovadas);
   }
 
   @POST

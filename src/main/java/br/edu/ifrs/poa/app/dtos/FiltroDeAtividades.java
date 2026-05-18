@@ -25,7 +25,7 @@ public class FiltroDeAtividades {
   }
 
   public Page getPagina() {
-    return Page.of(pagina - 1, tamanho == 0 ? 10 : tamanho);
+    return Page.of(pagina != null || pagina >= 0 ? pagina - 1 : 0, tamanho == null || tamanho <= 0 ? 10 : tamanho);
   }
 
   @Override

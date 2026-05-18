@@ -1,11 +1,12 @@
 let currentId = null;
 
-function openModal(id, nome, tipo, horas, data, status) {
+function openModal(id, titulo, nomeAluno, tipo, horas, data, status) {
   currentId = id;
 
   const content = `
     <div class="card">
-      <p><strong>Aluno:</strong> ${nome}</p>
+      <h3>${titulo}</h3>
+      <p><strong>Aluno:</strong> ${nomeAluno}</p>
       <p><strong>Atividade:</strong> ${tipo}</p>
       <p><strong>Horas:</strong> ${horas}h</p>
       <p><strong>Data:</strong> ${data}</p>
