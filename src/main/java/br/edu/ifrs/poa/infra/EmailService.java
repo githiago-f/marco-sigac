@@ -5,7 +5,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 @Singleton
-public class EmailProvider {
+public class EmailService {
   @Inject
   Mailer mailer;
 

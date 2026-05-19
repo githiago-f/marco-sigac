@@ -1,6 +1,7 @@
 package br.edu.ifrs.poa.model.atividades;
 
 public enum EstadoAtividade {
+  TODOS("todos"),
   HOMOLOGADO("homologado"), PENDENTE("pendente"), REJEITADO("rejeitado"), POSTADO("postado");
 
   String label;

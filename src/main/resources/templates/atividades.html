@@ -95,6 +95,7 @@
       <a href="/logout" class="btn">Sair</a>
     </div>
 
+    {#if horasFaltantes > 0}
     <!-- STATS -->
     <div class="grid">
       <div class="card">
@@ -117,6 +118,7 @@
           <div class="big">{horasTotais}h</div>
       </div>
     </div>
+    {/if}
 
     <!-- PROGRESS -->
     <div class="card" style="margin-bottom:20px;">
@@ -135,6 +137,7 @@
         + Nova Atividade
       </a>
     {#else}
+      <a href="{arquivoFinal}" class="btn btn-primary">Baixar Certificados</a>
     {/if}
 
     <!-- LIST -->

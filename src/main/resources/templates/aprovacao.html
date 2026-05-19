@@ -212,10 +212,11 @@
         <form method="get">
           <div class="form-group">
           <select name="estado" class="input" onchange="this.form.submit()">
-            <option value="" {filtroEstado == null ? "selected" : ""}>Todas</option>
+            <option value="todos" {filtroEstado.equals("todos") ? "selected" : ""}>Todas</option>
             <option value="pendente" {filtroEstado.equals("pendente") ? "selected" : ""}>Pendentes</option>
             <option value="homologado" {filtroEstado.equals("homologado") ? "selected" : ""}>Homologadas</option>
             <option value="rejeitado" {filtroEstado.equals("rejeitado") ? "selected" : ""}>Rejeitadas</option>
+            <option value="postado" {filtroEstado.equals("postado") ? "selected" : ""}>Postado</option>
           </select>
           </div>
         </form>

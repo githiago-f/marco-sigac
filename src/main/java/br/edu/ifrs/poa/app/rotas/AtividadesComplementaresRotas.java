@@ -2,6 +2,7 @@ package br.edu.ifrs.poa.app.rotas;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -17,6 +18,7 @@ import br.edu.ifrs.poa.app.dtos.Observacao;
 import br.edu.ifrs.poa.infra.ProvedorDeArmazenamento;
 import br.edu.ifrs.poa.model.atividades.Usuario;
 import br.edu.ifrs.poa.model.atividades.AtividadesRepository;
+import br.edu.ifrs.poa.model.atividades.DossieAtividades;
 import br.edu.ifrs.poa.model.atividades.EstadoAtividade;
 import io.quarkus.qute.Template;
 import io.quarkus.security.identity.SecurityIdentity;
@@ -27,6 +29,7 @@ import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response.Status;
 
 @Path("/atividades")
 public class AtividadesComplementaresRotas {
@@ -46,9 +49,15 @@ public class AtividadesComplementaresRotas {
 
   @GET
   @Path("/certificados/{arquivo}")
-  @RolesAllowed("professor")
+  @RolesAllowed({ "aluno", "professor" })
   @Produces(MediaType.APPLICATION_OCTET_STREAM)
-  public Response verArquivo(@PathParam("arquivo") String arquivo) {
+  public Response verArquivo(@PathParam("arquivo") String arquivo, @Context SecurityIdentity securityIdentity) {
+    var roles = securityIdentity.getRoles();
+    var usuario = new Usuario(securityIdentity);
+    if (roles.contains("aluno") && !atividadesRepository.ehDonoDoArquivo(usuario, arquivo)) {
+      return Response.status(Status.FORBIDDEN).build();
+    }
+
     var stream = provedorDeArmazenamento.lerArquivo(arquivo);
     return Response.ok(stream).build();
   }
@@ -115,11 +124,21 @@ public class AtividadesComplementaresRotas {
   }
 
   public String verAtividadesAluno(Usuario aluno) {
+    Optional<DossieAtividades> dossie = DossieAtividades.find("usuario.uid", aluno.uid).firstResultOptional();
+    logger.info("dossie = {}", dossie);
+
     var minhasAtividades = atividadesRepository.buscarMinhasAtividades(aluno.uid);
     var horasHomologadas = minhasAtividades.stream()
         .filter(a -> a.estado.equals(EstadoAtividade.HOMOLOGADO))
         .mapToDouble(a -> a.getHoras())
         .sum();
+
+    var horasAprovadas = minhasAtividades.stream()
+        .filter(a -> a.estado.equals(EstadoAtividade.POSTADO))
+        .mapToDouble(a -> a.getHoras())
+        .sum();
+
+    horasHomologadas += horasAprovadas;
 
     var horasPendentes = minhasAtividades.stream()
         .filter(a -> a.estado.equals(EstadoAtividade.PENDENTE))
@@ -135,6 +154,7 @@ public class AtividadesComplementaresRotas {
         .data("progresso", ((int) ((horasHomologadas * 100) / totalHoras) * 10) / 10.0)
         .data("horasTotais", totalHoras)
         .data("atividades", minhasAtividades)
+        .data("arquivoFinal", dossie.map(d -> "/atividades/certificados/" + d.arquivoFinal).orElse(""))
         .render();
 
   }
@@ -143,10 +163,13 @@ public class AtividadesComplementaresRotas {
     var totais = atividadesRepository.contaAtividadesPorTipo();
     var paginaAtividades = atividadesRepository.listarAtividades(filtro);
     var paginas = IntStream.rangeClosed(1, Math.toIntExact(paginaAtividades.paginas()) + 1).toArray();
+    var estadoPadrao = EstadoAtividade.PENDENTE.getLabel();
+
+    var estado = filtro.estado == null ? estadoPadrao : filtro.estado.getLabel();
 
     return aprovacao
         .data("usuario", usuario)
-        .data("filtroEstado", filtro.estado != null ? filtro.estado.getLabel() : null)
+        .data("filtroEstado", estado)
         .data("totalPendentes", totais.get(EstadoAtividade.PENDENTE))
         .data("totalHomologadas", totais.get(EstadoAtividade.HOMOLOGADO))
         .data("totalRejeitadas", totais.get(EstadoAtividade.REJEITADO))

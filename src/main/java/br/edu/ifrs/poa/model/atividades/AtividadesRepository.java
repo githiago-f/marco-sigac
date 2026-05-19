@@ -38,7 +38,7 @@ public class AtividadesRepository {
   }
 
   public record EnvelopeDTO(
-      String uid,
+      Usuario aluno,
       Double horasHomologadasTotal,
       List<AtividadeDTO> atividades) {
   }
@@ -48,11 +48,12 @@ public class AtividadesRepository {
     try (var cnn = dataSource.getConnection();
         var r = cnn.prepareStatement(query);
         var rs = r.executeQuery()) {
-      log.info("query : {}", query);
       var envelopes = new ArrayList<EnvelopeDTO>();
 
       while (rs.next()) {
         var uid = rs.getString("uid");
+        var email = rs.getString("email");
+        var nome = rs.getString("nome_aluno");
 
         var horasHomologadasTotal = rs.getDouble("horas_homologadas_total");
 
@@ -63,7 +64,7 @@ public class AtividadesRepository {
         List<AtividadeDTO> atividades = mapper.readValue(atividadesJson, typeRef);
 
         var caixa = new EnvelopeDTO(
-            uid,
+            new Usuario(uid, nome, email),
             horasHomologadasTotal,
             atividades);
 
@@ -86,7 +87,7 @@ public class AtividadesRepository {
 
     var page = filtro.getPagina();
 
-    if (filtro.estado != null) {
+    if (filtro.estado != null && !filtro.estado.equals(EstadoAtividade.TODOS)) {
       queries.add("and estado = ?");
     }
     if (filtro.alunoId != null) {
@@ -107,10 +108,10 @@ public class AtividadesRepository {
     Long total = 0l;
 
     try (var cnn = dataSource.getConnection(); var r = cnn.prepareStatement(buscaAtividades);) {
-      if (filtro.estado != null)
-        r.setInt(1, filtro.estado.ordinal());
+      if (filtro.estado != null && !filtro.estado.equals(EstadoAtividade.TODOS))
+        r.setString(1, filtro.estado.toString());
       if (filtro.alunoId != null)
-        r.setNString(queries.size(), filtro.alunoId);
+        r.setString(queries.size(), filtro.alunoId);
 
       var linhas = r.executeQuery();
       while (linhas.next()) {
@@ -120,7 +121,7 @@ public class AtividadesRepository {
         a.horas = linhas.getDouble("horas");
         a.horasHomologadas = linhas.getDouble("horasHomologadas");
         a.estado = EstadoAtividade.valueOf(linhas.getString("estado"));
-        a.aluno = new Usuario(linhas.getString("uid"), linhas.getString("nome_aluno"));
+        a.aluno = new Usuario(linhas.getString("uid"), linhas.getString("nome_aluno"), linhas.getString("email"));
         a.certificado = linhas.getString("certificado");
         a.observacao = linhas.getString("observacao");
         a.dataEnvio = linhas.getDate("dataEnvio");
@@ -223,5 +224,25 @@ public class AtividadesRepository {
 
   public Optional<TipoAtividade> buscaTipoPorNome(String nome) {
     return TipoAtividade.where((TipoAtividade ta) -> ta.nome.equals(nome)).findFirst();
+  }
+
+  private boolean ehArquivoFinal(Usuario usuario, String arquivo) {
+    return DossieAtividades
+        .where((DossieAtividades da) -> da.usuario.equals(usuario) && da.arquivoFinal.contains(arquivo))
+        .exists();
+  }
+
+  private boolean ehCertificadoUnico(Usuario usuario, String arquivo) {
+    return Atividade
+        .where((Atividade a) -> a.aluno.equals(usuario))
+        .where((Atividade a) -> a.certificado.contains(arquivo))
+        .exists();
+  }
+
+  public boolean ehDonoDoArquivo(Usuario usuario, String arquivo) {
+    var ehCertificadoUnico = ehCertificadoUnico(usuario, arquivo);
+    var ehArquivoFinal = ehArquivoFinal(usuario, arquivo);
+
+    return ehCertificadoUnico || ehArquivoFinal;
   }
 }
