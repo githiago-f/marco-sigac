@@ -162,11 +162,11 @@ public class AtividadesComplementaresRotas {
 
     return atividades
         .data("usuario", aluno)
-        .data("horasHomologadas", horasHomologadas)
-        .data("horasPendentes", horasPendentes)
-        .data("horasFaltantes", totalHoras - horasHomologadas)
-        .data("horasEnviadas", horasHomologadas + horasPendentes)
-        .data("progresso", ((int) ((horasHomologadas * 100) / totalHoras) * 10) / 10.0)
+        .data("horasHomologadas", String.format("%.2f",horasHomologadas))
+        .data("horasPendentes", String.format("%.2f", horasPendentes))
+        .data("horasFaltantes", String.format("%.2f", totalHoras - horasHomologadas))
+        .data("horasEnviadas", String.format("%.2f", horasHomologadas + horasPendentes))
+        .data("progresso", (((int) ((horasHomologadas * 100) / totalHoras) * 10) / 10.0))
         .data("horasTotais", totalHoras)
         .data("atividades", minhasAtividades)
         .data("arquivoFinal", dossie.map(d -> "/atividades/certificados/" + d.arquivoFinal).orElse(""))

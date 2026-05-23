@@ -86,8 +86,9 @@ public class AtividadesRepository {
     List<String> queries = new ArrayList<>();
 
     var page = filtro.getPagina();
+    var estado = filtro.estado == null ? EstadoAtividade.PENDENTE : filtro.estado;
 
-    if (filtro.estado != null && !filtro.estado.equals(EstadoAtividade.TODOS)) {
+    if (!estado.equals(EstadoAtividade.TODOS)) {
       queries.add("and estado = ?");
     }
     if (filtro.alunoId != null) {
@@ -108,8 +109,8 @@ public class AtividadesRepository {
     Long total = 0l;
 
     try (var cnn = dataSource.getConnection(); var r = cnn.prepareStatement(buscaAtividades);) {
-      if (filtro.estado != null && !filtro.estado.equals(EstadoAtividade.TODOS))
-        r.setString(1, filtro.estado.toString());
+      if (!estado.equals(EstadoAtividade.TODOS))
+        r.setString(1, estado.toString());
       if (filtro.alunoId != null)
         r.setString(queries.size(), filtro.alunoId);
 
