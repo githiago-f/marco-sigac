@@ -182,7 +182,7 @@ public class AtividadesRepository {
     atividade.horas = novaAtividadeRequest.horas;
     atividade.aluno = aluno;
     atividade.tipo = TipoAtividade.findById(novaAtividadeRequest.getTipoId());
-    atividade.certificado = caminhoDoCertificado;
+    atividade.certificado = "/atividades/certificados/" + caminhoDoCertificado;
 
     atividade.persistAndFlush();
 

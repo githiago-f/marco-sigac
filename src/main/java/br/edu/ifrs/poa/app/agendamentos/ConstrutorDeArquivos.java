@@ -8,6 +8,7 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import br.edu.ifrs.poa.app.dtos.emails.AtividadesConcluidas;
 import br.edu.ifrs.poa.infra.EmailService;
 import br.edu.ifrs.poa.infra.PdfService;
 import br.edu.ifrs.poa.infra.ProvedorDeArmazenamento;
@@ -24,8 +25,6 @@ import jakarta.transaction.Transactional;
 public class ConstrutorDeArquivos {
 
   private final Logger log = LoggerFactory.getLogger(ConstrutorDeArquivos.class);
-
-  private int contagemAnterior = 0;
 
   @Inject
   EmailService emailService;
@@ -64,7 +63,12 @@ public class ConstrutorDeArquivos {
 
     var arquivoPdf = Path.of(caminhoDestino, arquivo);
     for (var destinatario : destinatarios) {
-      emailService.send(new EmailDeConclusaoTemplate(destinatario, envelope, arquivoPdf));
+      try {
+        emailService.send(
+            new AtividadesConcluidas(destinatario, envelope.horasHomologadasTotal(), arquivoPdf));
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
     }
   }
 
@@ -94,53 +98,11 @@ public class ConstrutorDeArquivos {
 
     var correio = atividadesRepository.lerCaixaDeCorreio();
     var contagemDeEnvelopes = correio.size();
-    if (contagemDeEnvelopes != contagemAnterior) {
-      log.info("{} alunos com horas complementares concluídas", contagemDeEnvelopes);
-      contagemAnterior = contagemDeEnvelopes;
-    }
+    log.info("{} alunos com horas complementares concluídas", contagemDeEnvelopes);
 
     for (var envelope : correio) {
       construtorDeThreads.start(comandoParalelo(envelope));
     }
   }
 
-  private record EmailDeConclusaoTemplate(
-      String to,
-      AtividadesRepository.EnvelopeDTO envelope,
-      Path arquivoPdf) implements EmailService.MailTemplate {
-
-    @Override
-    public String subject() {
-      return "Horas complementares mínimas atingidas";
-    }
-
-    @Override
-    public Path[] attachments() {
-      return new Path[] { arquivoPdf };
-    }
-
-    @Override
-    public EmailService.Message message() {
-      var aluno = envelope.aluno().nome;
-      var horas = envelope.horasHomologadasTotal();
-      var html = """
-          <p>Olá, %s.</p>
-          <p>As horas complementares mínimas foram atingidas.</p>
-          <p>Total de horas homologadas: <strong>%.2f</strong>.</p>
-          <p>O dossiê com os certificados homologados está anexado a este email.</p>
-          """
-          .formatted(aluno, horas);
-      var text = """
-          Olá, %s.
-
-          As horas complementares mínimas foram atingidas.
-          Total de horas homologadas: %.2f.
-
-          O dossiê com os certificados homologados está anexado a este email.
-          """
-          .formatted(aluno, horas);
-
-      return new EmailService.Message(html, text);
-    }
-  }
 }

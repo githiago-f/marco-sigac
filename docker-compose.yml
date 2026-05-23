@@ -7,8 +7,26 @@ volumes:
     driver: local
   postgres-data:
     driver: local
+  smtp4dev-data:
+    driver: local
 
 services:
+  smtp:
+    image: rnwood/smtp4dev:v3
+    ports:
+      # Web interface (localhost only)
+      - '5000:80'
+      # SMTP server (localhost only)
+      - '25:25'
+      # IMAP server (localhost only)
+      - '143:143'
+      # POP3 server (localhost only)
+      - '110:110'
+    volumes:
+      - smtp4dev-data:/smtp4dev
+    environment:
+      - ServerOptions__Urls=http://*:80
+      - ServerOptions__HostName=smtp4dev
   db:
     image: postgres:17
     ports:

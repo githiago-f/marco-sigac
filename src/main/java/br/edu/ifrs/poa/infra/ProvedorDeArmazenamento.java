@@ -27,7 +27,10 @@ public class ProvedorDeArmazenamento {
     };
   }
 
-  public String persistir(FileUpload arquivo) throws IOException {
+  public record Arquivo(String urlArquivo, Path caminho) {
+  }
+
+  public Arquivo persistir(FileUpload arquivo) throws IOException {
     if (!arquivo.contentType().equals("application/pdf")) {
       System.out.println(arquivo.contentType());
       throw new RuntimeException("Arquivos aceitos: pdf");
@@ -38,7 +41,6 @@ public class ProvedorDeArmazenamento {
 
     var destino = Path.of(caminhoDestino, uuid);
     Files.move(arquivo.filePath(), destino);
-
-    return "/atividades/certificados/" + uuid;
+    return new Arquivo(uuid, destino);
   }
 }

@@ -4,6 +4,7 @@ import java.nio.file.Path;
 
 import io.quarkus.mailer.Mail;
 import io.quarkus.mailer.Mailer;
+import io.quarkus.qute.RawString;
 import io.quarkus.qute.Template;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -16,27 +17,27 @@ public class EmailService {
   @Inject
   Template mailingTemplate;
 
-  public record Message(String html, String text) {
+  public record Mensagem(String html, String texto) {
   }
 
   public interface MailTemplate {
-    String subject();
+    String assunto();
 
-    String to();
+    String para();
 
-    Path[] attachments();
+    Path[] anexos();
 
-    Message message();
+    Mensagem mensagem();
   }
 
   @SuppressWarnings("The static method withHtml")
   public void send(MailTemplate template) {
-    var templatedHtml = mailingTemplate.data("content", template.message().html).render();
+    var templatedHtml = mailingTemplate.data("content", new RawString(template.mensagem().html)).render();
     var templated = Mail
-        .withText(template.to(), template.subject(), template.message().text)
-        .withHtml(template.to(), template.subject(), templatedHtml);
+        .withHtml(template.para(), template.assunto(), templatedHtml)
+        .setText(template.mensagem().texto);
 
-    for (var attachment : template.attachments()) {
+    for (var attachment : template.anexos()) {
       var file = attachment.toFile();
       templated = templated.addAttachment(file.getName(), file, "application/pdf");
     }

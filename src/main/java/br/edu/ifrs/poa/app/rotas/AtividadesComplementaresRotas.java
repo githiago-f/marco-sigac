@@ -15,6 +15,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import br.edu.ifrs.poa.app.dtos.FiltroDeAtividades;
 import br.edu.ifrs.poa.app.dtos.NovaAtividadeRequest;
 import br.edu.ifrs.poa.app.dtos.Observacao;
+import br.edu.ifrs.poa.app.dtos.emails.AtividadeMudouDeEstado;
+import br.edu.ifrs.poa.app.dtos.emails.AtividadeRecebida;
+import br.edu.ifrs.poa.infra.EmailService;
 import br.edu.ifrs.poa.infra.ProvedorDeArmazenamento;
 import br.edu.ifrs.poa.model.atividades.Usuario;
 import br.edu.ifrs.poa.model.atividades.AtividadesRepository;
@@ -44,6 +47,9 @@ public class AtividadesComplementaresRotas {
   @Inject
   ProvedorDeArmazenamento provedorDeArmazenamento;
 
+  @Inject
+  EmailService emailService;
+
   @ConfigProperty(name = "br.edu.ifrs.poa.atividades-complementares.total-horas", defaultValue = "70")
   private Integer totalHoras;
 
@@ -71,7 +77,14 @@ public class AtividadesComplementaresRotas {
       @PathParam("estado") EstadoAtividade estado,
       Observacao corpo,
       @Context SecurityIdentity securityIdentity) {
-    atividadesRepository.alterarEstadoDaAtividade(atividadeId, estado, corpo.observacoes, corpo.horasAprovadas);
+    var talvezAtividade = atividadesRepository.alterarEstadoDaAtividade(
+        atividadeId, estado, corpo.observacoes, corpo.horasAprovadas);
+
+    if (talvezAtividade.isPresent()) {
+      var atividade = talvezAtividade.get();
+      emailService.send(
+          new AtividadeMudouDeEstado(atividade.aluno.email, atividade.estado, atividade.titulo, atividade.observacao));
+    }
   }
 
   @POST
@@ -84,7 +97,9 @@ public class AtividadesComplementaresRotas {
     try {
       var certificado = provedorDeArmazenamento.persistir(novaAtividadeRequest.arquivo);
 
-      atividadesRepository.novaAtividade(novaAtividadeRequest, certificado, aluno);
+      var atividade = atividadesRepository.novaAtividade(novaAtividadeRequest, certificado.urlArquivo(), aluno);
+
+      emailService.send(new AtividadeRecebida(aluno.email, atividade, certificado.caminho()));
 
       return Response.seeOther(URI.create("/atividades")).build();
     } catch (IOException e) {
