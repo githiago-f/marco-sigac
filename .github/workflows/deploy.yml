@@ -16,27 +16,14 @@ jobs:
       packages: write
 
     steps:
-
-      ######################################################
-      # CHECKOUT
-      ######################################################
-
       - name: Checkout
         uses: actions/checkout@v4
-
-      ######################################################
-      # JAVA
-      ######################################################
 
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 21
-
-      ######################################################
-      # MAVEN CACHE
-      ######################################################
+          java-version: 25
 
       - name: Cache Maven
         uses: actions/cache@v4
@@ -44,18 +31,8 @@ jobs:
           path: ~/.m2/repository
           key: maven-${{ hashFiles('**/pom.xml') }}
 
-      ######################################################
-      # BUILD QUARKUS
-      ######################################################
-
       - name: Build
-        run: |
-          ./mvnw clean package \
-            -DskipTests
-
-      ######################################################
-      # LOGIN GHCR
-      ######################################################
+        run: ./mvnw clean package -DskipTests
 
       - name: Login GHCR
         uses: docker/login-action@v3
@@ -63,10 +40,6 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
-      ######################################################
-      # METADATA
-      ######################################################
 
       - name: Docker metadata
         id: meta
@@ -77,10 +50,6 @@ jobs:
           tags: |
             type=raw,value=latest
             type=raw,value=${{ github.ref_name }}
-
-      ######################################################
-      # BUILD IMAGE
-      ######################################################
 
       - name: Build and Push
         uses: docker/build-push-action@v6
@@ -94,10 +63,6 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
 
           labels: ${{ steps.meta.outputs.labels }}
-
-      ######################################################
-      # CREATE RELEASE
-      ######################################################
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
