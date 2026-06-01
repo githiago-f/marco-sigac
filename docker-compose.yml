@@ -12,20 +12,23 @@ volumes:
 
 services:
   api_dev:
-    image: ghcr.io/githiago-f/macro-sigac:latest
+    build:
+      dockerfile: ./src/main/docker/Dockerfile.jvm
+      context: .
     restart: unless-stopped
+    environment:
+      DB_CONNECTION_URL: jdbc:postgresql://db_dev:5432/atividades 
+      LDAP_URL: ldap://openldapdev:3890
     ports:
-      - "80:80"
-      - "443:443"
-    env_file: .env
-    deploy:
-      resources:
-        limits:
-          memory: 128m
+      - "80:8080"
+    networks:
+      - my-network
+    mem_limit: 129m
+    cpus: 0.2
     depends_on:
       - smtp_dev
-      - openldap_dev
-      - dp_dev
+      - openldapdev
+      - db_dev
 
   smtp_dev:
     image: rnwood/smtp4dev:v3
@@ -40,6 +43,9 @@ services:
       - '110:110'
     volumes:
       - smtp4dev-data:/smtp4dev
+    networks:
+      - my-network
+    mem_limit: 255m
     environment:
       - ServerOptions__Urls=http://*:80
       - ServerOptions__HostName=smtp4dev
@@ -54,13 +60,14 @@ services:
      - POSTGRES_DB=atividades
     volumes: 
      - postgres-data:/var/lib/postgresql/data
-    mem_limit: 4g
+    networks:
+      - my-network
+    mem_limit: 128m
     cpus: 0.5
 
-  openldap_dev:
+  openldapdev:
     image: lldap/lldap
     ports:
-      - 3890:3890
       - 17170:17170
     environment:
       - LLDAP_JWT_SECRET=MhnXYBtz0}d!b{dzopyc<#-}7x+jCMR/
@@ -68,6 +75,8 @@ services:
       - LLDAP_VERBOSE=true
     networks:
       - my-network
+    mem_limit: 128m
+    cpus: 0.5
     volumes:
       - openldap_data:/data
 
