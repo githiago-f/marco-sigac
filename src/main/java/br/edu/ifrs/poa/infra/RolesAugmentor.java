@@ -1,5 +1,8 @@
 package br.edu.ifrs.poa.infra;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import io.quarkus.security.identity.AuthenticationRequestContext;
 import io.quarkus.security.identity.SecurityIdentity;
 import io.quarkus.security.identity.SecurityIdentityAugmentor;
@@ -9,10 +12,15 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class RolesAugmentor implements SecurityIdentityAugmentor {
+  private final Logger logger = LoggerFactory.getLogger(RolesAugmentor.class);
 
   @Override
   public Uni<SecurityIdentity> augment(SecurityIdentity identity,
       AuthenticationRequestContext context) {
+
+    logger.info("Principal={}", identity.getPrincipal().getName());
+    logger.info("Roles atuais={}", identity.getRoles());
+    logger.info("Attributes={}", identity.getAttributes());
 
     QuarkusSecurityIdentity.Builder builder = QuarkusSecurityIdentity.builder(identity);
 
