@@ -25,13 +25,14 @@ public class RolesAugmentor implements SecurityIdentityAugmentor {
       return Uni.createFrom().item(identity);
     }
 
-    logger.info("Principal={}", identity.getPrincipal().getName());
-    logger.info("Roles atuais={}", identity.getRoles());
-    logger.info("Attributes={}", identity.getAttributes());
+    logger.debug("Principal={}", identity.getPrincipal().getName());
+    logger.debug("Roles atuais={}", identity.getRoles());
+    logger.debug("Attributes={}", identity.getAttributes());
 
     QuarkusSecurityIdentity.Builder builder = QuarkusSecurityIdentity.builder(identity);
 
-    String dn = identity.getAttribute("dn");
+    String dn = (String) identity.getAttribute("dn");
+    logger.info("DN={}", dn);
 
     if (dn.contains("OU=Discente")) {
       builder.addRole("aluno");
