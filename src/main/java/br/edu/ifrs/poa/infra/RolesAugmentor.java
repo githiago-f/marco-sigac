@@ -2,6 +2,7 @@ package br.edu.ifrs.poa.infra;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.wildfly.security.authz.SimpleAttributesEntry;
 
 import io.quarkus.security.identity.AuthenticationRequestContext;
 import io.quarkus.security.identity.SecurityIdentity;
@@ -31,14 +32,14 @@ public class RolesAugmentor implements SecurityIdentityAugmentor {
 
     QuarkusSecurityIdentity.Builder builder = QuarkusSecurityIdentity.builder(identity);
 
-    String dn = (String) identity.getAttribute("dn");
-    logger.info("DN={}", dn);
+    SimpleAttributesEntry dn = (SimpleAttributesEntry) identity.getAttribute("dn");
+    logger.info("DN={}", dn.getFirst());
 
-    if (dn.contains("OU=Discente")) {
+    if (dn.getFirst().contains("OU=Discente")) {
       builder.addRole("aluno");
     }
 
-    if (dn.contains("OU=Docente")) {
+    if (dn.getFirst().contains("OU=Docente")) {
       builder.addRole("professor");
     }
 
