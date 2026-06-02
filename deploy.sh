@@ -12,14 +12,14 @@ APP_NAME="marco-sigac"
 APP_DIR="/opt/${APP_NAME}"
 LOG_DIR="/var/log/${APP_NAME}"
 
-DOMAIN="sigac.seudominio.com"
-EMAIL="admin@seudominio.com"
+DOMAIN=""
+EMAIL=""
 DOCKER_IMAGE="ghcr.io/githiago-f/marco-sigac:latest"
 
-CPU_LIMIT="2"
+CPU_LIMIT="0.5"
 MEMORY_LIMIT="3G"
 POSTGRES_MEMORY="3G"
-POSTGRES_CPU="2"
+POSTGRES_CPU="0.4"
 
 POSTGRES_DB="marco_sigac"
 POSTGRES_USER="marco"
@@ -175,7 +175,8 @@ services:
     networks:
       - internal
 
-    mem_limit: 64m
+    mem_limit: 1G
+    cpus: 0.1
 
 networks:
   internal:
