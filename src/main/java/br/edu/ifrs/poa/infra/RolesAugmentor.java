@@ -31,7 +31,7 @@ public class RolesAugmentor implements SecurityIdentityAugmentor {
 
     QuarkusSecurityIdentity.Builder builder = QuarkusSecurityIdentity.builder(identity);
 
-    String dn = identity.getPrincipal().getName();
+    String dn = identity.getAttribute("dn");
 
     if (dn.contains("OU=Discente")) {
       builder.addRole("aluno");
