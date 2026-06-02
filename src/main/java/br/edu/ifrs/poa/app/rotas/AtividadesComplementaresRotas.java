@@ -162,7 +162,7 @@ public class AtividadesComplementaresRotas {
 
     return atividades
         .data("usuario", aluno)
-        .data("horasHomologadas", String.format("%.2f",horasHomologadas))
+        .data("horasHomologadas", String.format("%.2f", horasHomologadas))
         .data("horasPendentes", String.format("%.2f", horasPendentes))
         .data("horasFaltantes", String.format("%.2f", totalHoras - horasHomologadas))
         .data("horasEnviadas", String.format("%.2f", horasHomologadas + horasPendentes))
@@ -206,7 +206,7 @@ public class AtividadesComplementaresRotas {
     logger.info("Filtro={}", filtro);
     var usuario = new Usuario(securityIdentity);
 
-    if (securityIdentity.hasRole("professores")) {
+    if (securityIdentity.hasRole("professor")) {
       return verAtividadesProfessor(usuario, filtro);
     }
 

@@ -15,8 +15,15 @@ public class RolesAugmentor implements SecurityIdentityAugmentor {
   private final Logger logger = LoggerFactory.getLogger(RolesAugmentor.class);
 
   @Override
-  public Uni<SecurityIdentity> augment(SecurityIdentity identity,
-      AuthenticationRequestContext context) {
+  public int priority() {
+    return 0;
+  }
+
+  @Override
+  public Uni<SecurityIdentity> augment(SecurityIdentity identity, AuthenticationRequestContext context) {
+    if (identity.isAnonymous()) {
+      return Uni.createFrom().item(identity);
+    }
 
     logger.info("Principal={}", identity.getPrincipal().getName());
     logger.info("Roles atuais={}", identity.getRoles());
