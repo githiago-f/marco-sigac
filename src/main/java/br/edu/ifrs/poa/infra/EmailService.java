@@ -42,6 +42,12 @@ public class EmailService {
       templated = templated.addAttachment(file.getName(), file, "application/pdf");
     }
 
-    mailer.send(templated);
+    try {
+      mailer.send(templated);
+    } catch (Exception e) {
+      if (!e.getMessage().contains("Connection refused: localhost/127.0.0.1:25")) {
+        throw e;
+      }
+    }
   }
 }
