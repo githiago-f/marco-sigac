@@ -6,78 +6,90 @@
   <link rel="stylesheet" href="/css/theme.css">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    .container {
-      max-width: 1100px;
-      margin: auto;
-      padding: 24px;
-    }
+  .container {
+    max-width: 68.75rem; /* 1100px */
+    margin: auto;
+    padding: 1.5rem; /* 24px */
+  }
 
-    .flex {
-      display: flex;
-    }
+  .flex {
+    display: flex;
+  }
 
-    .between {
-      justify-content: space-between;
-      align-items: center;
-    }
+  .between {
+    justify-content: space-between;
+    align-items: center;
+  }
 
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(12rem, 1fr));
+    gap: 0.75rem; /* 12px */
+    margin-block-end: 1.25rem; /* 20px */
+  }
+
+  @media (max-width: 68.75em) {
     .grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 12px;
-      margin-bottom: 20px;
+      grid-template-columns: repeat(2, 1fr);
     }
+  }
 
-    .card {
-      background: var(--color-card);
-      color: var(--color-card-foreground);
-      border: 1px solid var(--color-border);
-      border-radius: var(--radius-lg);
-      padding: 16px;
+  @media (max-width: 48em) {
+    .grid {
+      grid-template-columns: repeat(2, 1fr);
     }
+  }
 
-    .muted {
-      color: var(--color-muted-foreground);
-      font-size: 14px;
-    }
+  .card {
+    background: var(--color-card);
+    color: var(--color-card-foreground);
+    border: 0.0625rem solid var(--color-border); /* 1px */
+    border-radius: var(--radius-lg);
+    padding: 1rem; /* 16px */
+  }
 
-    .big {
-      font-size: 28px;
-    }
+  .muted {
+    color: var(--color-muted-foreground);
+    font-size: 0.875rem; /* 14px */
+  }
 
-    .progress {
-      height: 10px;
-      background: var(--color-muted);
-      border-radius: var(--radius-lg);
-      overflow: hidden;
-    }
+  .big {
+    font-size: 1.75rem; /* 28px */
+  }
 
-    .progress-bar {
-      height: 100%;
-      background: var(--color-primary);
-    }
+  .progress {
+    height: 0.625rem; /* 10px */
+    background: var(--color-muted);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
 
-    .btn {
-      padding: 8px 14px;
-      border-radius: var(--radius-md);
-      border: 1px solid var(--color-border);
-      text-decoration: none;
-      color: var(--color-foreground);
-    }
+  .progress-bar {
+    height: 100%;
+    background: var(--color-primary);
+  }
 
-    .btn-primary {
-      background: var(--color-primary);
-      color: var(--color-primary-foreground);
-      border: none;
-    }
+  .btn {
+    padding: 0.5rem 0.875rem; /* 8px 14px */
+    border-radius: var(--radius-md);
+    border: 0.0625rem solid var(--color-border); /* 1px */
+    text-decoration: none;
+    color: var(--color-foreground);
+  }
 
-    .atividade {
-      border: 1px solid var(--color-border);
-      border-radius: var(--radius-md);
-      padding: 12px;
-      margin-top: 10px;
-      background: var(--color-card);
-    }
+  .btn-primary {
+    background: var(--color-primary);
+    color: var(--color-primary-foreground);
+    border: none;
+  }
+
+  .atividade {
+    border: 0.0625rem solid var(--color-border); /* 1px */
+    border-radius: var(--radius-md);
+    padding: 0.75rem; /* 12px */
+    margin-top: 0.625rem; /* 10px */
+    background: var(--color-card);
+  }
   </style>
 </head>
 

@@ -4,30 +4,30 @@
   <meta charset="UTF-8">
   <title>Aprovação de Atividades</title>
   <link rel="stylesheet" href="/css/theme.css"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-  /* ===== LAYOUT BASE ===== */
+/* ===== LAYOUT BASE ===== */
 
 .container {
-  max-width: 1100px;
+  max-width: 68.75rem; /* 1100px */
   margin: auto;
-  padding: 24px;
+  padding: 1.5rem; /* 24px */
 }
 
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
+  margin-bottom: 1.5rem; /* 24px */
 }
 
 .grid-3 {
   display: grid;
-  gap: 16px;
-  margin-bottom: 24px;
+  gap: 1rem; /* 16px */
+  margin-bottom: 1.5rem; /* 24px */
 }
 
-@media (min-width: 768px) {
+@media (min-width: 48em) { /* 768px */
   .grid-3 {
     grid-template-columns: repeat(3, 1fr);
   }
@@ -44,14 +44,14 @@
 .atividade {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 14px;
-  border: 1px solid var(--color-border);
+  gap: 0.75rem; /* 12px */
+  padding: 0.875rem; /* 14px */
+  border: 0.0625rem solid var(--color-border); /* 1px */
   border-radius: var(--radius);
   background: var(--color-card);
 }
 
-@media (min-width: 768px) {
+@media (min-width: 48em) { /* 768px */
   .atividade {
     flex-direction: row;
     justify-content: space-between;
@@ -61,18 +61,18 @@
 
 .atividade-header {
   display: flex;
-  gap: 8px;
-  margin-bottom: 4px;
+  gap: 0.5rem; /* 8px */
+  margin-bottom: 0.25rem; /* 4px */
 }
 
 .atividade-meta {
-  font-size: 14px;
+  font-size: 0.875rem; /* 14px */
   color: var(--color-muted-foreground);
 }
 
 .atividade-actions {
   display: flex;
-  gap: 8px;
+  gap: 0.5rem; /* 8px */
   flex-wrap: wrap;
 }
 
@@ -81,7 +81,7 @@
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.5);
+  background: rgb(0 0 0 / 50%);
   display: none;
   align-items: center;
   justify-content: center;
@@ -94,61 +94,62 @@
 
 .modal {
   width: 100%;
-  max-width: 600px;
+  max-width: 37.5rem; /* 600px */
   background: var(--color-card);
   border-radius: var(--radius);
-  border: 1px solid var(--color-border);
-  padding: 20px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+  border: 0.0625rem solid var(--color-border); /* 1px */
+  padding: 1.25rem; /* 20px */
+  box-shadow: 0 0.625rem 1.875rem rgb(0 0 0 / 20%);
 }
 
 .modal-header {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 12px;
+  margin-bottom: 0.75rem; /* 12px */
 }
 
 .modal-body {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 0.75rem; /* 12px */
 }
 
 .modal-footer {
   display: flex;
   justify-content: flex-end;
-  gap: 8px;
-  margin-top: 16px;
+  gap: 0.5rem; /* 8px */
+  margin-top: 1rem; /* 16px */
 }
 
 .close-btn {
   cursor: pointer;
   border: none;
   background: transparent;
-  font-size: 18px;
+  font-size: 1.125rem; /* 18px */
 }
 
 /* ===== EMPTY ===== */
 
 .empty {
   text-align: center;
-  padding: 20px;
+  padding: 1.25rem; /* 20px */
   color: var(--color-muted-foreground);
 }
+
 .pagination {
   display: flex;
-  gap: 6px;
-  margin-top: 16px;
+  gap: 0.375rem; /* 6px */
+  margin-top: 1rem; /* 16px */
   flex-wrap: wrap;
 }
 
 .page-item {
-  padding: 6px 10px;
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
+  padding: 0.375rem 0.625rem; /* 6px 10px */
+  border: 0.0625rem solid var(--color-border); /* 1px */
+  border-radius: 0.375rem; /* 6px */
   text-decoration: none;
   color: var(--color-foreground);
-  font-size: 14px;
+  font-size: 0.875rem; /* 14px */
 }
 
 .page-item:hover {
