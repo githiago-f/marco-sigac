@@ -13,13 +13,8 @@ public class FiltroDeAtividades {
   public EstadoAtividade estado;
   @QueryParam("alunoId")
   public String alunoId;
-
-  public FiltroDeAtividades(Integer pagina, Integer tamanho, EstadoAtividade estado, String alunoId) {
-    this.pagina = pagina;
-    this.tamanho = tamanho;
-    this.estado = estado;
-    this.alunoId = alunoId;
-  }
+  @QueryParam("busca")
+  public String busca;
 
   public FiltroDeAtividades() {
   }
@@ -31,6 +26,6 @@ public class FiltroDeAtividades {
   @Override
   public String toString() {
     return "FiltroDeAtividades [page=" + pagina + ", size=" + tamanho + ", estado=" + estado + ", alunoId=" + alunoId
-        + "]";
+        + ", busca=" + busca + "]";
   }
 }

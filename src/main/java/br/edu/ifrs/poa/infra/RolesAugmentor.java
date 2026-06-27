@@ -33,14 +33,20 @@ public class RolesAugmentor implements SecurityIdentityAugmentor {
     QuarkusSecurityIdentity.Builder builder = QuarkusSecurityIdentity.builder(identity);
 
     SimpleAttributesEntry dn = (SimpleAttributesEntry) identity.getAttribute("dn");
-    logger.info("DN={}", dn.getFirst());
 
-    if (dn.getFirst().contains("OU=Discente")) {
-      builder.addRole("aluno");
-    }
+    if (dn != null) {
+      var dnValue = dn.getFirst();
+      logger.info("DN={}", dnValue);
 
-    if (dn.getFirst().contains("OU=Docente")) {
-      builder.addRole("professor");
+      if (dnValue.contains("OU=Discente")) {
+        builder.addRole("aluno");
+      }
+
+      if (dnValue.contains("OU=Docente")) {
+        builder.addRole("professor");
+      }
+    } else {
+      logger.warn("DN attribute not found — running without LDAP? Using available roles: {}", identity.getRoles());
     }
 
     return Uni.createFrom().item(builder.build());

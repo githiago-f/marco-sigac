@@ -1,6 +1,6 @@
 let currentId = null;
 
-function openModal(id, titulo, nomeAluno, tipo, horas, data, status) {
+function openModal(id, titulo, nomeAluno, tipo, horas, data, status, descricao, limite) {
   currentId = id;
 
   const content = `
@@ -8,7 +8,13 @@ function openModal(id, titulo, nomeAluno, tipo, horas, data, status) {
       <h3>${titulo}</h3>
       <p><strong>Aluno:</strong> ${nomeAluno}</p>
       <p><strong>Atividade:</strong> ${tipo}</p>
-      <p><strong>Horas:</strong> ${horas}h</p>
+      <div style="margin-top:8px;padding:8px;background:var(--color-muted);border-radius:6px;font-size:13px;">
+        <p><strong>Atividade:</strong> ${descricao || tipo}</p>
+        <p><strong>Máximo do item:</strong> ${limite || '30'} horas</p>
+        <p><strong>Critério:</strong> 1 hora de participação equivale a 1 hora de Atividade Complementar (AC)</p>
+        <p><strong>Comprovação:</strong> Atestado ou certificado expedido pela instituição responsável</p>
+      </div>
+      <p style="margin-top:8px;"><strong>Horas:</strong> ${horas}h</p>
       <p><strong>Data:</strong> ${data}</p>
       <p><strong>Status:</strong> ${status}</p>
     </div>

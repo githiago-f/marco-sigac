@@ -16,14 +16,19 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import br.edu.ifrs.poa.app.dtos.FiltroDeAtividades;
 import br.edu.ifrs.poa.app.dtos.NovaAtividadeRequest;
 import io.agroal.api.AgroalDataSource;
+import io.quarkus.panache.common.Page;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 
 @ApplicationScoped
 public class AtividadesRepository {
   @Inject
   AgroalDataSource dataSource;
+
+  @Inject
+  EntityManager em;
 
   private static final Logger log = LoggerFactory.getLogger(AtividadesRepository.class);
   private final ObjectMapper mapper = new ObjectMapper();
@@ -41,6 +46,17 @@ public class AtividadesRepository {
       Usuario aluno,
       Double horasHomologadasTotal,
       List<AtividadeDTO> atividades) {
+  }
+
+  public record AlunoComAtividades(
+      String uid,
+      String nome,
+      String email,
+      Long totalAtividades,
+      Double totalHoras) {
+  }
+
+  public record PaginaDeAlunos(Long paginas, Long total, List<AlunoComAtividades> alunos) {
   }
 
   public List<EnvelopeDTO> lerCaixaDeCorreio() {
@@ -84,35 +100,40 @@ public class AtividadesRepository {
 
   public PaginaDeAtividades listarAtividades(FiltroDeAtividades filtro) {
     List<String> queries = new ArrayList<>();
+    List<Object> params = new ArrayList<>();
 
     var page = filtro.getPagina();
     var estado = filtro.estado == null ? EstadoAtividade.PENDENTE : filtro.estado;
 
     if (!estado.equals(EstadoAtividade.TODOS)) {
-      queries.add("and estado = ?");
+      queries.add("and a.estado = ?");
+      params.add(estado.toString());
     }
     if (filtro.alunoId != null) {
-      queries.add("and alunoId = ? ");
+      queries.add("and a.usuario_uid = ?");
+      params.add(filtro.alunoId);
     }
 
     int offset = page.index * page.size;
     String sqlFiltros = " where 1=1 " + String.join(" ", queries);
 
-    String buscaAtividades = "select a.*, ta.* from atividades a left join tipos_atividade ta on ta.id = a.tipo_id"
-        + sqlFiltros + "  offset " + offset + " limit " + page.size;
-    String contaAtividades = "select count(*) as total from atividades " + sqlFiltros;
+    String buscaAtividades = """
+        SELECT a.*, ta.*, u.uid, u.nome, u.email
+        FROM atividades a
+        LEFT JOIN tipos_atividade ta ON ta.id = a.tipo_id
+        LEFT JOIN usuarios u ON u.uid = a.usuario_uid
+        """ + sqlFiltros + " offset " + offset + " limit " + page.size;
 
-    log.info("query busca: {}", buscaAtividades);
-    log.info("query conta: {}", contaAtividades);
+    String contaAtividades = "SELECT count(*) as total FROM atividades a " + sqlFiltros;
 
     List<Atividade> listaAtividades = new ArrayList<>();
-    Long total = 0l;
+    Long total = 0L;
 
-    try (var cnn = dataSource.getConnection(); var r = cnn.prepareStatement(buscaAtividades);) {
-      if (!estado.equals(EstadoAtividade.TODOS))
-        r.setString(1, estado.toString());
-      if (filtro.alunoId != null)
-        r.setString(queries.size(), filtro.alunoId);
+    try (var cnn = dataSource.getConnection();
+        var r = cnn.prepareStatement(buscaAtividades)) {
+      for (int i = 0; i < params.size(); i++) {
+        r.setString(i + 1, (String) params.get(i));
+      }
 
       var linhas = r.executeQuery();
       while (linhas.next()) {
@@ -122,7 +143,7 @@ public class AtividadesRepository {
         a.horas = linhas.getDouble("horas");
         a.horasHomologadas = linhas.getDouble("horasHomologadas");
         a.estado = EstadoAtividade.valueOf(linhas.getString("estado"));
-        a.aluno = new Usuario(linhas.getString("uid"), linhas.getString("nome_aluno"), linhas.getString("email"));
+        a.aluno = new Usuario(linhas.getString("uid"), linhas.getString("nome"), linhas.getString("email"));
         a.certificado = linhas.getString("certificado");
         a.observacao = linhas.getString("observacao");
         a.dataEnvio = linhas.getDate("dataEnvio");
@@ -139,17 +160,14 @@ public class AtividadesRepository {
     }
 
     try (var cnn = dataSource.getConnection();
-        var r = cnn.prepareStatement(contaAtividades);) {
-      if (filtro.estado != null)
-        r.setInt(1, filtro.estado.ordinal());
-      if (filtro.alunoId != null)
-        r.setNString(queries.size(), filtro.alunoId);
+        var r = cnn.prepareStatement(contaAtividades)) {
+      for (int i = 0; i < params.size(); i++) {
+        r.setString(i + 1, (String) params.get(i));
+      }
 
       var contagem = r.executeQuery();
-
       contagem.next();
       total = contagem.getLong("total");
-
       contagem.close();
     } catch (SQLException e) {
       e.printStackTrace();
@@ -173,6 +191,16 @@ public class AtividadesRepository {
     return Atividade.find("aluno.uid", uid).list();
   }
 
+  public Usuario buscarOuCriarUsuario(Usuario usuario) {
+    var existente = em.find(Usuario.class, usuario.uid);
+    if (existente != null) {
+      return existente;
+    }
+    em.persist(usuario);
+    return usuario;
+  }
+
+  @Transactional
   public Atividade novaAtividade(
       NovaAtividadeRequest novaAtividadeRequest,
       String caminhoDoCertificado,
@@ -181,7 +209,7 @@ public class AtividadesRepository {
     atividade.titulo = novaAtividadeRequest.titulo;
     atividade.estado = EstadoAtividade.PENDENTE;
     atividade.horas = novaAtividadeRequest.horas;
-    atividade.aluno = aluno;
+    atividade.aluno = buscarOuCriarUsuario(aluno);
     atividade.tipo = TipoAtividade.findById(novaAtividadeRequest.getTipoId());
     atividade.certificado = "/atividades/certificados/" + caminhoDoCertificado;
 
@@ -228,16 +256,37 @@ public class AtividadesRepository {
   }
 
   private boolean ehArquivoFinal(Usuario usuario, String arquivo) {
-    return DossieAtividades
-        .where((DossieAtividades da) -> da.usuario.equals(usuario) && da.arquivoFinal.contains(arquivo))
-        .exists();
+    var sql = "SELECT COUNT(*) FROM dossie_atividades da WHERE da.usuario_uid = ? AND da.arquivofinal LIKE ?";
+    try (var cnn = dataSource.getConnection();
+        var r = cnn.prepareStatement(sql)) {
+      var like = "%" + arquivo + "%";
+      r.setString(1, usuario.uid);
+      r.setString(2, like);
+      var rs = r.executeQuery();
+      if (rs.next()) {
+        return rs.getLong(1) > 0;
+      }
+    } catch (SQLException e) {
+      e.printStackTrace();
+    }
+    return false;
   }
 
   private boolean ehCertificadoUnico(Usuario usuario, String arquivo) {
-    return Atividade
-        .where((Atividade a) -> a.aluno.equals(usuario))
-        .where((Atividade a) -> a.certificado.contains(arquivo))
-        .exists();
+    var sql = "SELECT COUNT(*) FROM atividades a WHERE a.usuario_uid = ? AND a.certificado LIKE ?";
+    try (var cnn = dataSource.getConnection();
+        var r = cnn.prepareStatement(sql)) {
+      var like = "%" + arquivo + "%";
+      r.setString(1, usuario.uid);
+      r.setString(2, like);
+      var rs = r.executeQuery();
+      if (rs.next()) {
+        return rs.getLong(1) > 0;
+      }
+    } catch (SQLException e) {
+      e.printStackTrace();
+    }
+    return false;
   }
 
   public boolean ehDonoDoArquivo(Usuario usuario, String arquivo) {
@@ -245,5 +294,126 @@ public class AtividadesRepository {
     var ehArquivoFinal = ehArquivoFinal(usuario, arquivo);
 
     return ehCertificadoUnico || ehArquivoFinal;
+  }
+
+  public PaginaDeAlunos listarAlunosPorEstado(EstadoAtividade estado, String busca, Page page) {
+    var buscaAlunos = new StringBuilder("""
+        SELECT u.uid, u.nome, u.email,
+               COUNT(a.id) AS total_atividades,
+               COALESCE(SUM(a.horasHomologadas), 0) AS total_horas
+        FROM atividades a
+        JOIN usuarios u ON u.uid = a.usuario_uid
+        WHERE 1=1
+        """);
+    var contaAlunos = new StringBuilder("""
+        SELECT COUNT(*) AS total FROM (
+          SELECT u.uid
+          FROM atividades a
+          JOIN usuarios u ON u.uid = a.usuario_uid
+          WHERE 1=1
+        """);
+    var params = new ArrayList<String>();
+
+    if (estado != null && !estado.equals(EstadoAtividade.TODOS)) {
+      buscaAlunos.append(" AND a.estado = ?");
+      contaAlunos.append(" AND a.estado = ?");
+      params.add(estado.toString());
+    }
+
+    if (busca != null && !busca.isBlank()) {
+      var like = "%" + busca.toLowerCase() + "%";
+      buscaAlunos.append(" AND (LOWER(u.nome) LIKE ? OR LOWER(u.email) LIKE ?)");
+      contaAlunos.append(" AND (LOWER(u.nome) LIKE ? OR LOWER(u.email) LIKE ?)");
+      params.add(like);
+      params.add(like);
+    }
+
+    buscaAlunos.append("""
+
+        GROUP BY u.uid, u.nome, u.email
+        ORDER BY u.nome
+        OFFSET ? LIMIT ?
+        """);
+    contaAlunos.append(" GROUP BY u.uid) AS sub");
+
+    int offset = page.index * page.size;
+
+    var alunos = new ArrayList<AlunoComAtividades>();
+    Long total = 0L;
+
+    try (var cnn = dataSource.getConnection();
+        var r = cnn.prepareStatement(buscaAlunos.toString())) {
+      for (int i = 0; i < params.size(); i++) {
+        r.setString(i + 1, params.get(i));
+      }
+      r.setInt(params.size() + 1, offset);
+      r.setInt(params.size() + 2, page.size);
+
+      var rs = r.executeQuery();
+      while (rs.next()) {
+        alunos.add(new AlunoComAtividades(
+            rs.getString("uid"),
+            rs.getString("nome"),
+            rs.getString("email"),
+            rs.getLong("total_atividades"),
+            rs.getDouble("total_horas")));
+      }
+    } catch (SQLException e) {
+      e.printStackTrace();
+    }
+
+    try (var cnn = dataSource.getConnection();
+        var r = cnn.prepareStatement(contaAlunos.toString())) {
+      for (int i = 0; i < params.size(); i++) {
+        r.setString(i + 1, params.get(i));
+      }
+
+      var rs = r.executeQuery();
+      if (rs.next()) {
+        total = rs.getLong("total");
+      }
+    } catch (SQLException e) {
+      e.printStackTrace();
+    }
+
+    return new PaginaDeAlunos(total / page.size, total, alunos);
+  }
+
+  public Long contarAlunosPorEstado(EstadoAtividade estado, String busca) {
+    var sql = new StringBuilder("""
+        SELECT COUNT(DISTINCT u.uid) AS total
+        FROM atividades a
+        JOIN usuarios u ON u.uid = a.usuario_uid
+        WHERE 1=1
+        """);
+    var params = new ArrayList<String>();
+
+    if (estado != null && !estado.equals(EstadoAtividade.TODOS)) {
+      sql.append(" AND a.estado = ?");
+      params.add(estado.toString());
+    }
+
+    if (busca != null && !busca.isBlank()) {
+      var like = "%" + busca.toLowerCase() + "%";
+      sql.append(" AND (LOWER(u.nome) LIKE ? OR LOWER(u.email) LIKE ?)");
+      params.add(like);
+      params.add(like);
+    }
+
+    try (var cnn = dataSource.getConnection();
+        var r = cnn.prepareStatement(sql.toString())) {
+      for (int i = 0; i < params.size(); i++) {
+        r.setString(i + 1, params.get(i));
+      }
+
+      var rs = r.executeQuery();
+      if (rs.next()) {
+        return rs.getLong("total");
+      }
+    } catch (SQLException e) {
+      e.printStackTrace();
+    }
+
+    return 0L;
   }
 }

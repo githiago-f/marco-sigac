@@ -76,6 +76,34 @@
   flex-wrap: wrap;
 }
 
+/* ===== ALUNO CARD ===== */
+
+.aluno-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem;
+  border: 0.0625rem solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-card);
+  transition: box-shadow 0.15s;
+}
+
+.aluno-card:hover {
+  box-shadow: 0 0.125rem 0.5rem rgb(0 0 0 / 8%);
+}
+
+.aluno-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.aluno-card-meta {
+  font-size: 0.875rem;
+  color: var(--color-muted-foreground);
+}
+
 /* ===== MODAL ===== */
 
 .modal-overlay {
@@ -161,6 +189,39 @@
   color: var(--color-primary-foreground);
   border: none;
 }
+
+/* ===== SEARCH ===== */
+
+.search-form {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.search-input {
+  height: 36px;
+  padding: 0 10px;
+  border-radius: 6px;
+  border: 0.0625rem solid var(--color-border);
+  background: var(--color-input-background);
+  outline: none;
+  flex: 1;
+  min-width: 180px;
+}
+
+.search-input:focus {
+  box-shadow: 0 0 0 3px var(--color-ring);
+}
+
+/* ===== BACK LINK ===== */
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.875rem;
+}
 </style>
 </head>
 <body>
@@ -171,10 +232,14 @@
     <!-- HEADER -->
     <div class="header">
       <div>
-        <h1>Aprovação de Atividades</h1>
-        <p>Professor: {usuario.nome}</p>
+        <div style="margin-bottom:8px;">
+          <h1 style="font-size:20px;">Sistema de Gestão de Atividades Complementares</h1>
+          <p class="muted" style="font-size:13px;">Curso Superior de Tecnologia em Sistemas para Internet (SSI)</p>
+        </div>
+        <h2 style="font-size:18px;">Aprovação de Atividades</h2>
+        <p class="muted" style="margin-top:2px;font-size:13px;">Professor: {usuario.nome} ({usuario.email})</p>
       </div>
-      
+
       <a href="/logout" class="btn">Sair</a>
 
     </div>
@@ -207,75 +272,125 @@
     <div class="card">
       <div class="card-header flex-between">
         <div>
-          <h3>Lista de Atividades</h3>
-          <p>Analise e aprove as atividades dos alunos</p>
+          {#if modoAluno}
+            <a href="?" class="back-link btn">← Voltar para lista de alunos</a>
+            <h3>Atividades do Aluno</h3>
+          {#else}
+            <h3>Alunos</h3>
+            <p>Selecione um aluno para ver suas atividades</p>
+          {/if}
         </div>
 
-        <form method="get">
-          <div class="form-group">
-          <select name="estado" class="input" onchange="this.form.submit()">
+        <form method="get" class="search-form">
+          {#if modoAluno}
+            <input type="hidden" name="alunoId" value="{alunoId}">
+          {/if}
+
+          {#if !modoAluno}
+          <input
+            type="text"
+            name="busca"
+            class="search-input"
+            placeholder="Buscar por nome ou e-mail..."
+            value="{filtroBusca}"
+          >
+          {/if}
+
+          <select name="estado" class="input" onchange="this.form.submit()" style="width:auto;">
             <option value="todos" {filtroEstado.equals("todos") ? "selected" : ""}>Todas</option>
             <option value="pendente" {filtroEstado.equals("pendente") ? "selected" : ""}>Pendentes</option>
             <option value="homologado" {filtroEstado.equals("homologado") ? "selected" : ""}>Homologadas</option>
             <option value="rejeitado" {filtroEstado.equals("rejeitado") ? "selected" : ""}>Rejeitadas</option>
             <option value="postado" {filtroEstado.equals("postado") ? "selected" : ""}>Postado</option>
           </select>
-          </div>
         </form>
       </div>
 
       <div class="card-content">
 
-        {#for atividade in atividades}
-        <div class="atividade">
-          <div class="atividade-info">
-            <div class="atividade-header">
-              <strong>{atividade.titulo} | {atividade.tipo.nome}</strong>
-              <span class="badge badge-{atividade.estado.label}">
-                {atividade.estado.label}
-              </span>
+        {#if modoAluno}
+          {#for atividade in atividades}
+          <div class="atividade">
+            <div class="atividade-info">
+              <div class="atividade-header">
+                <strong>{atividade.titulo} | {atividade.tipo.nome}</strong>
+                <span class="badge badge-{atividade.estado.label}">
+                  {atividade.estado.label}
+                </span>
+              </div>
+
+              <div class="atividade-meta">
+                <p>Aluno: {atividade.aluno.nome}</p>
+                <p>Horas: {atividade.horas}h</p>
+                <p>Data: {atividade.dataEnvio}</p>
+              </div>
             </div>
 
-            <div class="atividade-meta">
-              <p>Aluno: {atividade.aluno.nome}</p>
-              <p>Horas: {atividade.horas}h</p>
-              <p>Data: {atividade.dataEnvio}</p>
+            <div class="atividade-actions">
+              <a class="btn btn-outline"
+                href="{atividade.certificado}">
+                Certificado
+              </a>
+
+              <button class="btn"
+                onclick="openModal(
+                  '{atividade.id}',
+                  '{atividade.titulo}',
+                  '{atividade.aluno.nome}',
+                  '{atividade.tipo.nome}',
+                  '{atividade.horas}',
+                  '{atividade.dataEnvio}',
+                  '{atividade.estado.label}',
+                  '{atividade.tipo.descricao}',
+                  '{atividade.tipo.limite}'
+                )">
+                Analisar
+              </button>
             </div>
           </div>
+          {/for}
 
-          <div class="atividade-actions">
-            <a class="btn btn-outline"
-              href="{atividade.certificado}">
-              Certificado
-            </a>
-
-            <button class="btn"
-              onclick="openModal(
-                '{atividade.id}',
-                '{atividade.titulo}',
-                '{atividade.aluno.nome}',
-                '{atividade.tipo.nome}',
-                '{atividade.horas}',
-                '{atividade.dataEnvio}',
-                '{atividade.estado.label}'
-              )">
-              Analisar
-            </button>
+          {#if atividades.size == 0}
+          <div class="empty">
+            Nenhuma atividade encontrada para este aluno
           </div>
-        </div>
-        {/for}
+          {/if}
+        {#else}
+          {#for aluno in alunos}
+          <div class="aluno-card">
+            <div class="aluno-card-header">
+              <div>
+                <strong>{aluno.nome}</strong>
+                <span class="aluno-card-meta" style="margin-left:4px;">({aluno.email})</span>
+              </div>
+              <div style="text-align:right;">
+                <div class="big" style="font-size:1.25rem;">{aluno.totalAtividades}</div>
+                <div class="muted">atividades</div>
+              </div>
+            </div>
+            <div class="aluno-card-meta">
+              Total de horas: {aluno.totalHoras}h
+            </div>
+            <div style="margin-top:4px;">
+              <a href="?alunoId={aluno.uid}&estado={filtroEstado}" class="btn">
+                Ver Atividades
+              </a>
+            </div>
+          </div>
+          {/for}
 
-        {#if atividades.size == 0}
-        <div class="empty">
-          Nenhuma atividade encontrada
-        </div>
+          {#if alunos.size == 0}
+          <div class="empty">
+            Nenhum aluno encontrado com o filtro atual
+          </div>
+          {/if}
         {/if}
 
       {#if total > tamanho}
       <nav class="pagination">
         {#for i in paginas}
           <a
-            href="?pagina={i}&tamanho={tamanho}&estado={filtroEstado}"
+            href="?pagina={i}&tamanho={tamanho}&estado={filtroEstado}{#if modoAluno}&alunoId={alunoId}{/if}{#if !modoAluno && filtroBusca.length > 0}&busca={filtroBusca}{/if}"
             class="page-item {#if i == paginaAtual}active{/if}">
             {i}
           </a>
@@ -310,5 +425,11 @@
 </div>
 
 <script src="/js/script.js"></script>
+
+<footer style="text-align:center;padding:16px;font-size:13px;color:var(--color-muted-foreground);border-top:1px solid var(--color-border);margin-top:24px;">
+  Dúvidas? Entre em contato com a Coordenação do Curso pelo e-mail:
+  <a href="mailto:ssi@poa.ifrs.edu.br" style="color:var(--color-foreground);">ssi@poa.ifrs.edu.br</a>
+</footer>
+
 </body>
 </html>

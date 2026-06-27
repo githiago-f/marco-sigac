@@ -6,7 +6,8 @@ import br.edu.ifrs.poa.infra.EmailService;
 import br.edu.ifrs.poa.infra.EmailService.Mensagem;
 import br.edu.ifrs.poa.model.atividades.EstadoAtividade;
 
-public record AtividadeMudouDeEstado(String para, EstadoAtividade estado, String titulo, String observacao)
+public record AtividadeMudouDeEstado(String para, EstadoAtividade estado, String titulo, String observacao,
+    String nomeAluno)
     implements EmailService.MailTemplate {
 
   @Override
@@ -16,7 +17,7 @@ public record AtividadeMudouDeEstado(String para, EstadoAtividade estado, String
 
   @Override
   public String assunto() {
-    return "Certificado " + estado.getLabel();
+    return "[SIGAC] - " + nomeAluno + " - " + titulo;
   }
 
   @Override

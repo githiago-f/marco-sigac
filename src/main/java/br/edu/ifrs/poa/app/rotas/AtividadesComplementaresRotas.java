@@ -19,10 +19,10 @@ import br.edu.ifrs.poa.app.dtos.emails.AtividadeMudouDeEstado;
 import br.edu.ifrs.poa.app.dtos.emails.AtividadeRecebida;
 import br.edu.ifrs.poa.infra.EmailService;
 import br.edu.ifrs.poa.infra.ProvedorDeArmazenamento;
-import br.edu.ifrs.poa.model.atividades.Usuario;
 import br.edu.ifrs.poa.model.atividades.AtividadesRepository;
 import br.edu.ifrs.poa.model.atividades.DossieAtividades;
 import br.edu.ifrs.poa.model.atividades.EstadoAtividade;
+import br.edu.ifrs.poa.model.atividades.Usuario;
 import io.quarkus.qute.Template;
 import io.quarkus.security.identity.SecurityIdentity;
 import jakarta.annotation.security.RolesAllowed;
@@ -83,7 +83,8 @@ public class AtividadesComplementaresRotas {
     if (talvezAtividade.isPresent()) {
       var atividade = talvezAtividade.get();
       emailService.send(
-          new AtividadeMudouDeEstado(atividade.aluno.email, atividade.estado, atividade.titulo, atividade.observacao));
+          new AtividadeMudouDeEstado(atividade.aluno.email, atividade.estado, atividade.titulo, atividade.observacao,
+              atividade.aluno.nome));
     }
   }
 
@@ -175,6 +176,31 @@ public class AtividadesComplementaresRotas {
   }
 
   public String verAtividadesProfessor(Usuario usuario, FiltroDeAtividades filtro) {
+    if (filtro.alunoId != null) {
+      return verAtividadesDeAluno(usuario, filtro);
+    }
+
+    var estado = filtro.estado == null ? EstadoAtividade.PENDENTE : filtro.estado;
+    var paginaAlunos = atividadesRepository.listarAlunosPorEstado(estado, filtro.busca, filtro.getPagina());
+    var paginas = IntStream.rangeClosed(1, Math.toIntExact(paginaAlunos.paginas()) + 1).toArray();
+
+    return aprovacao
+        .data("usuario", usuario)
+        .data("modoAluno", false)
+        .data("filtroEstado", estado.getLabel())
+        .data("filtroBusca", filtro.busca != null ? filtro.busca : "")
+        .data("totalPendentes", atividadesRepository.contarAlunosPorEstado(EstadoAtividade.PENDENTE, null))
+        .data("totalHomologadas", atividadesRepository.contarAlunosPorEstado(EstadoAtividade.HOMOLOGADO, null))
+        .data("totalRejeitadas", atividadesRepository.contarAlunosPorEstado(EstadoAtividade.REJEITADO, null))
+        .data("alunos", paginaAlunos.alunos())
+        .data("paginas", paginas)
+        .data("total", paginaAlunos.total())
+        .data("paginaAtual", filtro.pagina)
+        .data("tamanho", filtro.tamanho)
+        .render();
+  }
+
+  private String verAtividadesDeAluno(Usuario usuario, FiltroDeAtividades filtro) {
     var totais = atividadesRepository.contaAtividadesPorTipo();
     var paginaAtividades = atividadesRepository.listarAtividades(filtro);
     var paginas = IntStream.rangeClosed(1, Math.toIntExact(paginaAtividades.paginas()) + 1).toArray();
@@ -184,7 +210,10 @@ public class AtividadesComplementaresRotas {
 
     return aprovacao
         .data("usuario", usuario)
+        .data("modoAluno", true)
         .data("filtroEstado", estado)
+        .data("filtroBusca", filtro.busca != null ? filtro.busca : "")
+        .data("alunoId", filtro.alunoId)
         .data("totalPendentes", totais.get(EstadoAtividade.PENDENTE))
         .data("totalHomologadas", totais.get(EstadoAtividade.HOMOLOGADO))
         .data("totalRejeitadas", totais.get(EstadoAtividade.REJEITADO))

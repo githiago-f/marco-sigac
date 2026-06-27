@@ -99,8 +99,14 @@
     <!-- HEADER -->
     <div class="flex between" style="margin-bottom:20px;">
       <div>
-        <h1>Atividades</h1>
-        <p class="muted">Bem-vindo, {usuario.nome}</p>
+        <h1>Sistema de Gestão de Atividades Complementares</h1>
+        <p class="muted" style="margin-top:4px;">
+          Curso Superior de Tecnologia em Sistemas para Internet (SSI)
+        </p>
+        <p style="margin-top:8px;">
+          <strong>{usuario.nome}</strong>
+          <span class="muted" style="margin-left:4px;">({usuario.email})</span>
+        </p>
       </div>
 
       <a href="/logout" class="btn">Sair</a>
@@ -190,5 +196,11 @@
     </div>
 
   </div>
+
+  <footer style="text-align:center;padding:16px;font-size:13px;color:var(--color-muted-foreground);border-top:1px solid var(--color-border);">
+    Dúvidas? Entre em contato com a Coordenação do Curso pelo e-mail:
+    <a href="mailto:ssi@poa.ifrs.edu.br" style="color:var(--color-foreground);">ssi@poa.ifrs.edu.br</a>
+  </footer>
+
 </body>
 </html>

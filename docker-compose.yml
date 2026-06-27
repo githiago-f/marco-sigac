@@ -13,18 +13,19 @@ volumes:
 services:
   api_dev:
     build:
-      dockerfile: ./src/main/docker/Dockerfile.jvm
+      dockerfile: ./src/main/docker/Dockerfile.dev
       context: .
     restart: unless-stopped
     environment:
       DB_CONNECTION_URL: jdbc:postgresql://db_dev:5432/atividades 
       LDAP_URL: ldap://openldapdev:3890
     ports:
-      - "80:8080"
+      - "8080:8080"
+      - "5005:5005"
+    volumes:
+      - ./src:/app/src
     networks:
       - my-network
-    mem_limit: 129m
-    cpus: 0.2
     depends_on:
       - smtp_dev
       - openldapdev
@@ -46,6 +47,7 @@ services:
     networks:
       - my-network
     mem_limit: 255m
+    cpus: 0.5
     environment:
       - ServerOptions__Urls=http://*:80
       - ServerOptions__HostName=smtp4dev
@@ -69,6 +71,7 @@ services:
     image: lldap/lldap
     ports:
       - 17170:17170
+      - 3890:3890
     environment:
       - LLDAP_JWT_SECRET=MhnXYBtz0}d!b{dzopyc<#-}7x+jCMR/
       - LLDAP_LDAP_USER_PASS=senha123

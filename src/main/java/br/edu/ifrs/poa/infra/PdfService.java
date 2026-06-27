@@ -143,15 +143,18 @@ public class PdfService {
 
     contentStream.beginText();
     contentStream.setNonStrokingColor(0.10f, 0.12f, 0.11f);
-    contentStream.setFont(FONTE_TITULO, 13);
-    contentStream.newLineAtOffset(MARGEM, topo - 30);
+    contentStream.setFont(FONTE_TITULO, 11);
+    contentStream.newLineAtOffset(MARGEM, topo - 26);
     contentStream.showText("Atividade complementar homologada");
 
-    contentStream.setFont(FONTE_TEXTO, 10);
-    contentStream.newLineAtOffset(0, -20);
-    contentStream.showText(textoQueCabe("Tipo: " + atividade.tipoAtividade(), FONTE_TEXTO, 10, larguraUtil));
+    contentStream.setFont(FONTE_TITULO, 12);
+    contentStream.setNonStrokingColor(0.08f, 0.35f, 0.22f);
+    contentStream.newLineAtOffset(0, -22);
+    contentStream.showText(textoQueCabe(atividade.tipoAtividade().toUpperCase(), FONTE_TITULO, 12, larguraUtil));
 
-    contentStream.newLineAtOffset(0, -17);
+    contentStream.setFont(FONTE_TEXTO, 10);
+    contentStream.setNonStrokingColor(0.10f, 0.12f, 0.11f);
+    contentStream.newLineAtOffset(0, -18);
     contentStream.showText(textoQueCabe(
         "Titulo: " + atividade.titulo() + " | Horas: " + atividade.horas(),
         FONTE_TEXTO,
