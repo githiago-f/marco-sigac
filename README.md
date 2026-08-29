@@ -1,6 +1,10 @@
 # Atividades complementares
 # 📘 Documentação Completa – Aplicação Quarkus + LDAP + PostgreSQL
 
+> **📐 Guia de configuração**: para entender como configurar e-mails por evento,
+> SMTP, LDAP, banco de dados e demais opções, consulte o guia completo em
+> **[docs/CONFIGURACAO.md](docs/CONFIGURACAO.md)**.
+
 ---
 
 ## 🎯 Objetivo
