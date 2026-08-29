@@ -2,14 +2,12 @@ package br.edu.ifrs.poa.app.agendamentos;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.LinkedHashSet;
-import java.util.Optional;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import br.edu.ifrs.poa.app.dtos.emails.AtividadesConcluidas;
-import br.edu.ifrs.poa.infra.EmailService;
+import br.edu.ifrs.poa.infra.EmailEvento;
 import br.edu.ifrs.poa.infra.PdfService;
 import br.edu.ifrs.poa.infra.ProvedorDeArmazenamento;
 import br.edu.ifrs.poa.model.atividades.AtividadesRepository;
@@ -27,7 +25,7 @@ public class ConstrutorDeArquivos {
   private final Logger log = LoggerFactory.getLogger(ConstrutorDeArquivos.class);
 
   @Inject
-  EmailService emailService;
+  EmailEvento emailEvento;
   @Inject
   ProvedorDeArmazenamento provedorDeArmazenamento;
   @Inject
@@ -38,9 +36,6 @@ public class ConstrutorDeArquivos {
   @ConfigProperty(name = "br.edu.ifrs.poa.atividades-complementares.uploads-folder")
   String caminhoDestino;
 
-  @ConfigProperty(name = "br.edu.ifrs.poa.atividades-complementares.email-caixa-destino")
-  Optional<String> emailCaixaDestino;
-
   @Transactional
   void criaDossie(AtividadesRepository.EnvelopeDTO envelope, String arquivo) {
     var dossie = new DossieAtividades(envelope.aluno(), envelope.horasHomologadasTotal(), arquivo);
@@ -48,27 +43,14 @@ public class ConstrutorDeArquivos {
   }
 
   private void enviarEmailDeConclusao(AtividadesRepository.EnvelopeDTO envelope, String arquivo) {
-    var destinatarios = new LinkedHashSet<String>();
-    emailCaixaDestino.ifPresent(email -> {
-      if (email != null && !email.isBlank()) {
-        destinatarios.add(email);
-      }
-    });
-    destinatarios.add(envelope.aluno().email);
-
-    if (destinatarios.isEmpty()) {
-      log.warn("Nenhum destinatário configurado para o aluno {}", envelope.aluno().uid);
-      return;
-    }
-
     var arquivoPdf = Path.of(caminhoDestino, arquivo);
-    for (var destinatario : destinatarios) {
-      try {
-        emailService.send(
-            new AtividadesConcluidas(destinatario, envelope.horasHomologadasTotal(), arquivoPdf));
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
+    try {
+      emailEvento.enviar("concluido", envelope.aluno().email, Map.of(
+          "aluno", envelope.aluno().nome,
+          "alunoEmail", envelope.aluno().email,
+          "horas", envelope.horasHomologadasTotal()), arquivoPdf);
+    } catch (Exception e) {
+      e.printStackTrace();
     }
   }
 

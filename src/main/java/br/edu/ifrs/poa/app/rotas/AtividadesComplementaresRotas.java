@@ -2,6 +2,7 @@ package br.edu.ifrs.poa.app.rotas;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -15,9 +16,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import br.edu.ifrs.poa.app.dtos.FiltroDeAtividades;
 import br.edu.ifrs.poa.app.dtos.NovaAtividadeRequest;
 import br.edu.ifrs.poa.app.dtos.Observacao;
-import br.edu.ifrs.poa.app.dtos.emails.AtividadeMudouDeEstado;
-import br.edu.ifrs.poa.app.dtos.emails.AtividadeRecebida;
-import br.edu.ifrs.poa.infra.EmailService;
+import br.edu.ifrs.poa.infra.EmailEvento;
 import br.edu.ifrs.poa.infra.ProvedorDeArmazenamento;
 import br.edu.ifrs.poa.model.atividades.AtividadesRepository;
 import br.edu.ifrs.poa.model.atividades.DossieAtividades;
@@ -48,7 +47,7 @@ public class AtividadesComplementaresRotas {
   ProvedorDeArmazenamento provedorDeArmazenamento;
 
   @Inject
-  EmailService emailService;
+  EmailEvento emailEvento;
 
   @ConfigProperty(name = "br.edu.ifrs.poa.atividades-complementares.total-horas", defaultValue = "70")
   private Integer totalHoras;
@@ -82,9 +81,12 @@ public class AtividadesComplementaresRotas {
 
     if (talvezAtividade.isPresent()) {
       var atividade = talvezAtividade.get();
-      emailService.send(
-          new AtividadeMudouDeEstado(atividade.aluno.email, atividade.estado, atividade.titulo, atividade.observacao,
-              atividade.aluno.nome));
+      emailEvento.enviar(atividade.estado.getLabel(), atividade.aluno.email, Map.of(
+          "aluno", atividade.aluno.nome,
+          "alunoEmail", atividade.aluno.email,
+          "estado", atividade.estado.getLabel(),
+          "titulo", atividade.titulo,
+          "observacao", atividade.observacao != null ? atividade.observacao : ""));
     }
   }
 
@@ -100,7 +102,11 @@ public class AtividadesComplementaresRotas {
 
       var atividade = atividadesRepository.novaAtividade(novaAtividadeRequest, certificado.urlArquivo(), aluno);
 
-      emailService.send(new AtividadeRecebida(aluno.email, atividade, certificado.caminho()));
+      emailEvento.enviar("recebido", aluno.email, Map.of(
+          "aluno", aluno.nome,
+          "alunoEmail", aluno.email,
+          "titulo", atividade.titulo,
+          "horas", atividade.getHoras()), certificado.caminho());
 
       return Response.seeOther(URI.create("/atividades")).build();
     } catch (IOException e) {
